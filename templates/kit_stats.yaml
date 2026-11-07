@@ -1,0 +1,30 @@
+# kit_stats: a tile with 2-3 numbers side by side (internet speed, energy, power...).
+# entity = optional, for tap/more-info. variables:
+#   items: list of {name, entity, unit, decimals}. Values that are not numbers show "—".
+kit_stats:
+  template: kit_tile
+  icon: mdi:chart-box-outline
+  variables:
+    items: []
+  styles:
+    grid:
+      - grid-template-areas: '"i b" "n n" "v v"'
+      - grid-template-rows: auto 1fr auto
+    custom_fields:
+      v:
+        - justify-self: stretch
+        - font-size: 15px
+        - font-weight: 400
+  custom_fields:
+    v: >
+      [[[
+        const cell = (it) => {
+          const st = it.entity && states[it.entity];
+          const n = st ? parseFloat(st.state) : NaN;
+          const val = isNaN(n) ? '—' : n.toFixed(it.decimals != null ? it.decimals : 0);
+          const unit = isNaN(n) ? '' : (it.unit != null ? it.unit : (st.attributes.unit_of_measurement || ''));
+          return `<div><div style="font-size:var(--kit-size-label,12px);color:var(--kit-text-dim,rgba(255,255,255,.68))">${it.name || ''}</div>`
+            + `<div style="font-size:26px;font-weight:600;line-height:1.15">${val}<span style="font-size:13px;font-weight:500;color:var(--kit-text-dim,rgba(255,255,255,.68))"> ${unit}</span></div></div>`;
+        };
+        return `<div style="display:flex;gap:20px">${(variables.items || []).map(cell).join('')}</div>`;
+      ]]]

@@ -1,0 +1,65 @@
+# kit_tile: base of every kit component. Glass surface, layout slots, unavailable state.
+# Slots (grid areas): i = icon, b = badge (top right), n = name, v = main value, l = label line.
+# Components extend it with `template: kit_tile` and fill the slots; they never restyle the surface.
+kit_tile:
+  show_icon: true
+  show_name: true
+  show_state: false
+  show_label: false
+  tap_action:
+    action: more-info
+  styles:
+    card:
+      - background: var(--kit-surface, linear-gradient(145deg, rgba(255, 255, 255, 0.17) 0%, rgba(255, 255, 255, 0.05) 100%))
+      - '-webkit-backdrop-filter': var(--kit-blur, blur(28px) saturate(115%))
+      - backdrop-filter: var(--kit-blur, blur(28px) saturate(115%))
+      - border: 1px solid var(--kit-stroke, rgba(255, 255, 255, 0.24))
+      - border-radius: var(--kit-radius, 28px)
+      - box-shadow: var(--kit-shadow, inset 0 1px 0 rgba(255, 255, 255, 0.40), inset 0 -1px 0 rgba(255, 255, 255, 0.06), 0 12px 32px rgba(3, 10, 45, 0.35))
+      - padding: var(--kit-pad, 14px)
+      - height: 100%
+      - box-sizing: border-box
+      - color: var(--kit-text, rgba(255, 255, 255, 0.95))
+      - font-family: var(--kit-font, -apple-system, BlinkMacSystemFont, 'SF Pro Rounded', 'Segoe UI', Roboto, system-ui, sans-serif)
+    grid:
+      - grid-template-areas: '"i b" "n n" "v v" "l l"'
+      - grid-template-columns: auto 1fr
+      - grid-template-rows: auto 1fr auto auto
+      - row-gap: 2px
+    img_cell:
+      - justify-content: flex-start
+      - width: 32px
+      - height: 32px
+    icon:
+      - width: 26px
+      - color: var(--kit-text-dim, rgba(255, 255, 255, 0.68))
+    name:
+      - justify-self: start
+      - align-self: end
+      - font-size: var(--kit-size-name, 15px)
+      - font-weight: 600
+      - color: var(--kit-text, rgba(255, 255, 255, 0.95))
+    custom_fields:
+      b:
+        - justify-self: end
+        - align-self: start
+        - font-size: var(--kit-size-label, 12px)
+        - color: var(--kit-text-dim, rgba(255, 255, 255, 0.68))
+      v:
+        - justify-self: start
+        - font-size: var(--kit-size-value, 34px)
+        - font-weight: 600
+        - line-height: 1.1
+      l:
+        - justify-self: start
+        - font-size: var(--kit-size-label, 12px)
+        - color: var(--kit-text-dim, rgba(255, 255, 255, 0.68))
+  state:
+    - value: unavailable
+      styles:
+        card:
+          - opacity: 0.45
+    - value: unknown
+      styles:
+        card:
+          - opacity: 0.45

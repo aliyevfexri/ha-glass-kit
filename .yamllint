@@ -1,0 +1,14 @@
+extends: default
+rules:
+  line-length: disable          # theme gradients and JS one-liners are long by nature
+  document-start: disable
+  truthy:
+    allowed-values: ["true", "false"]
+    check-keys: false           # GitHub Actions uses `on:`
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: disable
+  braces:
+    max-spaces-inside: 1
+  brackets:
+    max-spaces-inside: 1

@@ -1,0 +1,16 @@
+# kit_spacer: empty, invisible block. Put one at the very end of a view that has a fixed
+# bottom bar (bubble-card horizontal-buttons-stack), so the last row can scroll above the bar.
+# Use it in a full-width last section (column_span = max_columns) with grid_options columns 12.
+kit_spacer:
+  show_name: false
+  show_state: false
+  show_icon: false
+  tap_action: {action: none}
+  hold_action: {action: none}
+  styles:
+    card:
+      - height: var(--kit-bottom-space, 110px)
+      - background: none
+      - border: none
+      - box-shadow: none
+      - pointer-events: none

@@ -1,0 +1,65 @@
+# kit_appliance: any appliance (washer, oven, fridge, dishwasher...).
+# entity = main state entity (shown as the value, e.g. "Running", "Off").
+# variables:
+#   detail: optional entity id for the label line (e.g. remaining time, temperature, door)
+#   detail_unit: optional text appended to the detail state
+#   active_states: states that mean "working" -> accent icon (default: on, running, run)
+#   alert_states: states that need attention -> alert icon (default: open, finished, done)
+#   state_names: optional map state -> shown text (e.g. {"on": Open, "off": Closed} for a door sensor)
+#   details: optional list of extra {entity, unit, label} shown on the label line (e.g. freezer temperature)
+#   progress: optional percent sensor, shown while active ("70%")
+#   finish: optional timestamp sensor, shown while active ("ready 14:20")
+kit_appliance:
+  template: kit_tile
+  icon: mdi:washing-machine
+  variables:
+    detail: null
+    detail_unit: ''
+    active_states: ["on", running, run]
+    alert_states: [open, finished, done]
+    state_names: {}
+    details: []
+    progress: null
+    finish: null
+  styles:
+    icon:
+      - color: >
+          [[[
+            if (!entity) return 'var(--kit-off, rgba(255, 255, 255, 0.55))';
+            const st = String(entity.state).toLowerCase();
+            if ((variables.alert_states || []).includes(st)) return 'var(--kit-alert, #ff453a)';
+            if ((variables.active_states || []).includes(st)) return 'var(--kit-accent, #0a84ff)';
+            return 'var(--kit-off, rgba(255, 255, 255, 0.55))';
+          ]]]
+    custom_fields:
+      v:
+        - font-size: 22px
+  custom_fields:
+    v: >
+      [[[
+        if (!entity) return '—';
+        const s = String(entity.state);
+        const names = variables.state_names || {};
+        if (names[s] !== undefined) return names[s];
+        return s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' ');
+      ]]]
+    l: >
+      [[[
+        const bad = ['unavailable', 'unknown', 'none', ''];
+        const pretty = (v) => { const t = String(v).replace(/_/g, ' '); return isNaN(parseFloat(t)) ? t.charAt(0).toUpperCase() + t.slice(1) : t; };
+        const parts = [];
+        const active = entity && (variables.active_states || []).includes(String(entity.state).toLowerCase());
+        if (active && variables.progress && states[variables.progress] && !isNaN(parseFloat(states[variables.progress].state)))
+          parts.push(`${Math.round(parseFloat(states[variables.progress].state))}%`);
+        if (active && variables.finish && states[variables.finish]) {
+          const d = new Date(states[variables.finish].state);
+          if (!isNaN(d) && d > new Date()) parts.push(`ready ${d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`);
+        }
+        if (variables.detail && states[variables.detail] && !bad.includes(states[variables.detail].state))
+          parts.push(`${pretty(states[variables.detail].state)}${variables.detail_unit || ''}`);
+        for (const d of (variables.details || [])) {
+          const st = d.entity && states[d.entity];
+          if (st && !bad.includes(st.state)) parts.push(`${d.label ? d.label + ' ' : ''}${pretty(st.state)}${d.unit || ''}`);
+        }
+        return parts.join(' · ');
+      ]]]

@@ -1,0 +1,22 @@
+name: lint
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml yamllint
+      - name: yamllint
+        run: yamllint --strict .
+      - name: build examples for UI mode
+        run: |
+          for f in examples/*.yaml; do
+            python3 tools/build_ui.py "$f" > /dev/null
+          done

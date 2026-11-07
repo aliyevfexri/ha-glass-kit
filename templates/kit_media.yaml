@@ -1,0 +1,90 @@
+# kit_media: a speaker / media player (HomePod, Sonos, TV...). entity = media_player.*
+# Shows what is playing (title, artist) and round buttons: volume -, play/pause, volume +.
+kit_media:
+  template: kit_tile
+  icon: mdi:speaker
+  styles:
+    grid:
+      - grid-template-areas: '"i b" "n n" "v v" "l l" "c c"'
+      - grid-template-rows: auto 1fr auto auto auto
+    icon:
+      - color: >
+          [[[ return entity && entity.state === 'playing' ? 'var(--kit-accent, #0a84ff)' : 'var(--kit-off, rgba(255, 255, 255, 0.55))'; ]]]
+    custom_fields:
+      v:
+        - font-size: 20px
+        - white-space: nowrap
+        - overflow: hidden
+        - text-overflow: ellipsis
+        - max-width: 100%
+      c:
+        - justify-self: stretch
+        - margin-top: 8px
+  custom_fields:
+    b: >
+      [[[
+        if (!entity || entity.attributes.volume_level == null) return '';
+        return `${Math.round(entity.attributes.volume_level * 100)}%`;
+      ]]]
+    v: >
+      [[[
+        if (!entity) return '—';
+        if (['playing', 'paused'].includes(entity.state) && entity.attributes.media_title) return entity.attributes.media_title;
+        const s = entity.state;
+        return s === 'unavailable' ? 'Offline' : s.charAt(0).toUpperCase() + s.slice(1);
+      ]]]
+    l: >
+      [[[
+        if (!entity || !['playing', 'paused'].includes(entity.state)) return '';
+        return entity.attributes.media_artist || entity.attributes.app_name || '';
+      ]]]
+    c:
+      card:
+        type: custom:button-card
+        entity: '[[[ return entity ? entity.entity_id : ""; ]]]'
+        show_icon: false
+        show_name: false
+        show_state: false
+        styles:
+          card:
+            - background: none
+            - border: none
+            - box-shadow: none
+            - padding: 0
+          grid:
+            - grid-template-areas: '"down play up"'
+            - grid-template-columns: 44px 1fr 44px
+            - justify-items: center
+            - align-items: center
+        custom_fields:
+          down:
+            card:
+              type: custom:button-card
+              template: kit_button
+              icon: mdi:volume-minus
+              tap_action:
+                action: '[[[ return entity ? "perform-action" : "none"; ]]]'
+                perform_action: media_player.volume_down
+                target:
+                  entity_id: '[[[ return entity ? entity.entity_id : ""; ]]]'
+          play:
+            card:
+              type: custom:button-card
+              template: kit_button
+              icon: >
+                [[[ return entity && entity.state === 'playing' ? 'mdi:pause' : 'mdi:play'; ]]]
+              tap_action:
+                action: '[[[ return entity ? "perform-action" : "none"; ]]]'
+                perform_action: media_player.media_play_pause
+                target:
+                  entity_id: '[[[ return entity ? entity.entity_id : ""; ]]]'
+          up:
+            card:
+              type: custom:button-card
+              template: kit_button
+              icon: mdi:volume-plus
+              tap_action:
+                action: '[[[ return entity ? "perform-action" : "none"; ]]]'
+                perform_action: media_player.volume_up
+                target:
+                  entity_id: '[[[ return entity ? entity.entity_id : ""; ]]]'

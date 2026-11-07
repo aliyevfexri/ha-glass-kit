@@ -1,0 +1,18 @@
+# kit_button: small round action button used inside components (e.g. -/+ on a thermostat).
+# Set icon + tap_action where it is used.
+kit_button:
+  show_name: false
+  show_state: false
+  styles:
+    card:
+      - background: var(--kit-surface-strong, rgba(255, 255, 255, 0.10))
+      - border: 1.5px solid var(--kit-button-stroke, rgba(255, 255, 255, 0.75))
+      - box-sizing: border-box
+      - border-radius: 50%
+      - box-shadow: none
+      - width: 44px
+      - height: 44px
+      - padding: 0
+    icon:
+      - width: 22px
+      - color: var(--kit-text, rgba(255, 255, 255, 0.95))

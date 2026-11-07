@@ -1,0 +1,47 @@
+# kit_heat_overview: all heated rooms at a glance + optional boiler relay.
+# variables:
+#   rooms: list of {name, climate}
+#   boiler: optional switch entity id (shown as "Boiler on/off")
+# Tap action: set `tap_action` where used (e.g. navigate to a pop-up hash).
+kit_heat_overview:
+  template: kit_tile
+  icon: mdi:fire
+  name: Heating
+  variables:
+    rooms: []
+    boiler: null
+  styles:
+    grid:
+      - grid-template-areas: '"i b" "n n" "r r"'
+      - grid-template-rows: auto auto 1fr
+    icon:
+      - color: >
+          [[[
+            const on = (variables.rooms || []).some(r => states[r.climate] && states[r.climate].attributes.hvac_action === 'heating');
+            return on ? 'var(--kit-heat, #ff9f0a)' : 'var(--kit-off, rgba(255, 255, 255, 0.55))';
+          ]]]
+    custom_fields:
+      r:
+        - justify-self: stretch
+        - align-self: end
+        - font-size: 14px
+  custom_fields:
+    b: >
+      [[[
+        if (!variables.boiler || !states[variables.boiler]) return '';
+        return states[variables.boiler].state === 'on' ? 'Boiler on' : 'Boiler off';
+      ]]]
+    r: >
+      [[[
+        return (variables.rooms || []).map(r => {
+          const s = states[r.climate];
+          if (!s) return `<div style="display:flex;justify-content:space-between;opacity:.45"><span>${r.name}</span><span>—</span></div>`;
+          const heat = s.attributes.hvac_action === 'heating';
+          const cur = s.attributes.current_temperature != null ? Number(s.attributes.current_temperature).toFixed(1) + '°' : '—';
+          const tgt = s.attributes.temperature != null ? s.attributes.temperature + '°' : '—';
+          return `<div style="display:flex;justify-content:space-between;padding:3px 0">
+                    <span>${heat ? '<span style="color:var(--kit-heat, #ff9f0a)">●</span> ' : ''}${r.name}</span>
+                    <span>${cur} <span style="color:var(--kit-text-dim, rgba(255, 255, 255, 0.68))">→ ${tgt}</span></span>
+                  </div>`;
+        }).join('');
+      ]]]

@@ -1,0 +1,110 @@
+# kit_heat_room: one heated room. entity = a climate entity (e.g. generic_thermostat).
+# variables:
+#   humidity: optional humidity sensor entity id
+#   next_step: optional sensor whose state is the next schedule step text (e.g. "19 °C at 08:00")
+#   sensor: optional temperature sensor behind the thermostat; when it is unavailable the tile says "Sensor offline"
+#           (a thermostat keeps showing the last reading, which hides a dead sensor)
+# Shows current temperature, target with -/+ (step = target_temp_step or 0.5, clamped to min/max),
+# and whether it is heating right now (hvac_action).
+kit_heat_room:
+  template: kit_tile
+  icon: mdi:radiator
+  variables:
+    humidity: null
+    next_step: null
+    sensor: null
+  styles:
+    grid:
+      - grid-template-areas: '"i b" "n n" "v v" "l l" "c c"'
+      - grid-template-rows: auto 1fr auto auto auto
+    icon:
+      - color: >
+          [[[
+            const sn = variables.sensor && states[variables.sensor];
+            if (sn && ['unavailable', 'unknown'].includes(sn.state)) return 'var(--kit-alert, #ff453a)';
+            return entity && entity.attributes.hvac_action === 'heating' ? 'var(--kit-heat, #ff9f0a)' : 'var(--kit-off, rgba(255, 255, 255, 0.55))';
+          ]]]
+    custom_fields:
+      c:
+        - justify-self: stretch
+        - margin-top: 8px
+  custom_fields:
+    b: >
+      [[[
+        if (!entity) return '';
+        const sn = variables.sensor && states[variables.sensor];
+        if (sn && ['unavailable', 'unknown'].includes(sn.state)) return 'Sensor offline';
+        return entity.attributes.hvac_action === 'heating' ? 'Heating' : (entity.state === 'off' ? 'Off' : 'Idle');
+      ]]]
+    v: >
+      [[[
+        if (!entity) return '—';
+        const t = entity.attributes.current_temperature;
+        return (t === undefined || t === null) ? '—' : `${Number(t).toFixed(1)}°`;
+      ]]]
+    l: >
+      [[[
+        const parts = [];
+        if (variables.humidity && states[variables.humidity] && !isNaN(parseFloat(states[variables.humidity].state))) parts.push(`${states[variables.humidity].state}% humidity`);
+        if (variables.next_step && states[variables.next_step] && !['unavailable','unknown'].includes(states[variables.next_step].state)) parts.push(`Next: ${states[variables.next_step].state}`);
+        return parts.join(' · ');
+      ]]]
+    c:
+      card:
+        type: custom:button-card
+        entity: '[[[ return entity ? entity.entity_id : ""; ]]]'
+        show_icon: false
+        show_name: false
+        show_state: false
+        styles:
+          card:
+            - background: none
+            - border: none
+            - box-shadow: none
+            - padding: 0
+          grid:
+            - grid-template-areas: '"minus target plus"'
+            - grid-template-columns: 44px 1fr 44px
+            - align-items: center
+          custom_fields:
+            target:
+              - font-size: 20px
+              - font-weight: 600
+              - color: var(--kit-text, rgba(255, 255, 255, 0.95))
+        custom_fields:
+          target: >
+            [[[ return (entity && entity.attributes.temperature != null) ? `${entity.attributes.temperature}°` : '—'; ]]]
+          minus:
+            card:
+              type: custom:button-card
+              template: kit_button
+              icon: mdi:minus
+              tap_action:
+                action: '[[[ return entity ? "perform-action" : "none"; ]]]'
+                perform_action: climate.set_temperature
+                target:
+                  entity_id: '[[[ return entity ? entity.entity_id : ""; ]]]'
+                data:
+                  temperature: >
+                    [[[
+                      if (!entity) return null;
+                      const a = entity.attributes, s = a.target_temp_step || 0.5;
+                      return Math.round(Math.max(a.min_temp, Number(a.temperature) - s) * 100) / 100;
+                    ]]]
+          plus:
+            card:
+              type: custom:button-card
+              template: kit_button
+              icon: mdi:plus
+              tap_action:
+                action: '[[[ return entity ? "perform-action" : "none"; ]]]'
+                perform_action: climate.set_temperature
+                target:
+                  entity_id: '[[[ return entity ? entity.entity_id : ""; ]]]'
+                data:
+                  temperature: >
+                    [[[
+                      if (!entity) return null;
+                      const a = entity.attributes, s = a.target_temp_step || 0.5;
+                      return Math.round(Math.min(a.max_temp, Number(a.temperature) + s) * 100) / 100;
+                    ]]]

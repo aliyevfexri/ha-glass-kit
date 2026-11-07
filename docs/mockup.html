@@ -1,0 +1,173 @@
+<title>Glass Kit Layout</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: page = toolbar + one "screen" frame that reflows like an HA sections view (1 / 2 / 3 section columns). Tokens mirror dashboards/kit/theme/glass.yaml. */
+:root{
+  --bg:#0b0e14; --page-fg:rgba(255,255,255,.92); --page-dim:rgba(255,255,255,.6); --page-line:rgba(255,255,255,.12);
+  --kit-bg:radial-gradient(120% 120% at 0% 0%,#2b3a55 0%,#141a26 55%,#0b0e14 100%);
+  --kit-surface:rgba(255,255,255,.08); --kit-surface-strong:rgba(255,255,255,.16); --kit-stroke:rgba(255,255,255,.12);
+  --kit-text:rgba(255,255,255,.95); --kit-text-dim:rgba(255,255,255,.6);
+  --kit-accent:#0a84ff; --kit-heat:#ff9f0a; --kit-ok:#30d158; --kit-alert:#ff453a; --kit-off:rgba(255,255,255,.35);
+  --kit-radius:24px; --kit-pad:14px;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Rounded","Segoe UI",Roboto,system-ui,sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){
+  --bg:#f3f5f9; --page-fg:rgba(0,0,0,.88); --page-dim:rgba(0,0,0,.55); --page-line:rgba(0,0,0,.1);
+  --kit-bg:radial-gradient(120% 120% at 0% 0%,#dfe8f7 0%,#eef1f6 55%,#f7f8fa 100%);
+  --kit-surface:rgba(255,255,255,.55); --kit-surface-strong:rgba(255,255,255,.9); --kit-stroke:rgba(0,0,0,.08);
+  --kit-text:rgba(0,0,0,.88); --kit-text-dim:rgba(0,0,0,.55);
+  --kit-accent:#007aff; --kit-heat:#ff9500; --kit-ok:#34c759; --kit-alert:#ff3b30; --kit-off:rgba(0,0,0,.3);
+  color-scheme:light; } }
+:root[data-theme="light"]{
+  --bg:#f3f5f9; --page-fg:rgba(0,0,0,.88); --page-dim:rgba(0,0,0,.55); --page-line:rgba(0,0,0,.1);
+  --kit-bg:radial-gradient(120% 120% at 0% 0%,#dfe8f7 0%,#eef1f6 55%,#f7f8fa 100%);
+  --kit-surface:rgba(255,255,255,.55); --kit-surface-strong:rgba(255,255,255,.9); --kit-stroke:rgba(0,0,0,.08);
+  --kit-text:rgba(0,0,0,.88); --kit-text-dim:rgba(0,0,0,.55);
+  --kit-accent:#007aff; --kit-heat:#ff9500; --kit-ok:#34c759; --kit-alert:#ff3b30; --kit-off:rgba(0,0,0,.3);
+  color-scheme:light; }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--page-fg);font-family:var(--font);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{font-size:26px;margin:0;text-wrap:balance}
+.lead{margin:0;color:var(--page-dim);max-width:65ch;line-height:1.5}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--page-line);border-radius:999px;padding:3px;gap:2px}
+.seg button{font:inherit;font-size:14px;border:0;background:none;color:var(--page-dim);padding:7px 14px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--kit-surface-strong);color:var(--page-fg);font-weight:600}
+.seg button:focus-visible,.tile button:focus-visible{outline:2px solid var(--kit-accent);outline-offset:2px}
+.note{font-size:13px;color:var(--page-dim)}
+.stage{overflow-x:auto;border:1px solid var(--page-line);border-radius:18px;padding:14px}
+.screen{margin:0 auto;background:var(--kit-bg);border-radius:20px;padding:16px;color:var(--kit-text);transition:max-width .25s ease;max-width:1140px}
+.screen.phone{max-width:390px}.screen.tablet{max-width:820px}
+@media (prefers-reduced-motion:reduce){.screen{transition:none}}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;min-height:34px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:var(--kit-surface-strong);font-size:13px;font-weight:600}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--kit-alert);display:inline-block}
+.chip.heat i{background:var(--kit-heat)}
+.sections{display:grid;gap:16px;grid-template-columns:repeat(3,minmax(0,1fr))}
+.screen.tablet .sections{grid-template-columns:repeat(2,minmax(0,1fr))}
+.screen.phone .sections{grid-template-columns:1fr}
+.section{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-content:start}
+.section h2{grid-column:1/-1;margin:2px 4px 2px;font-size:19px}
+.tile{background:var(--kit-surface);-webkit-backdrop-filter:blur(24px) saturate(140%);backdrop-filter:blur(24px) saturate(140%);border:1px solid var(--kit-stroke);border-radius:var(--kit-radius);padding:var(--kit-pad);display:grid;grid-template-columns:auto 1fr;grid-template-areas:"i b" "n n" "v v" "l l" "c c";row-gap:2px;min-height:96px}
+.tile.wide{grid-column:1/-1}
+.tile.room{min-height:200px}
+.ic{grid-area:i;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:var(--kit-off)}
+.ic svg{width:22px;height:22px}
+.on .ic{color:var(--kit-heat)} .run .ic{color:var(--kit-accent)} .alert .ic{color:var(--kit-alert)}
+.b{grid-area:b;justify-self:end;font-size:12px;color:var(--kit-text-dim)}
+.n{grid-area:n;align-self:end;font-size:15px;font-weight:600;margin-top:8px}
+.v{grid-area:v;font-size:34px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.v.small{font-size:22px}
+.l{grid-area:l;font-size:12px;color:var(--kit-text-dim);min-height:15px}
+.c{grid-area:c;display:grid;grid-template-columns:44px 1fr 44px;align-items:center;margin-top:8px;text-align:center}
+.c button{width:44px;height:44px;border-radius:50%;border:0;background:var(--kit-surface-strong);color:var(--kit-text);font-size:22px;line-height:1;cursor:pointer}
+.c span{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.rows{grid-area:l;display:flex;flex-direction:column;gap:4px;font-size:14px;margin-top:8px}
+.rows div{display:flex;justify-content:space-between;gap:8px}
+.rows em{font-style:normal;color:var(--kit-text-dim)}
+.dot{color:var(--kit-heat)}
+.footer{display:flex;justify-content:center;gap:8px;margin-top:16px}
+.footer span{padding:10px 18px;border-radius:999px;background:var(--kit-surface-strong);font-size:14px;font-weight:600}
+.footer span.later{opacity:.45}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.legend div{border-top:1px solid var(--page-line);padding-top:10px}
+.legend b{display:block;margin-bottom:4px}
+.legend p{margin:0;color:var(--page-dim);font-size:14px;line-height:1.5}
+</style>
+
+<div class="wrap">
+  <h1>Glass kit, example layout</h1>
+  <p class="lead">How a typical home dashboard looks with the kit. Switch the screen size to see the same tiles reflow. The numbers are examples, not live readings; the + and − buttons work so you can try what a tap does.</p>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Screen size">
+      <button id="sz-phone" data-size="phone" aria-pressed="false">Phone</button>
+      <button id="sz-tablet" data-size="tablet" aria-pressed="false">Tablet</button>
+      <button id="sz-laptop" data-size="laptop" aria-pressed="true">Laptop</button>
+    </div>
+    <span class="note">Sections: 1 column on a phone, 2 on a tablet, 3 on a laptop.</span>
+  </div>
+
+  <div class="stage">
+    <div class="screen" id="screen">
+      <div class="chips" aria-label="Header chips (only shown when true)">
+        <span class="chip"><i></i>Washer finished</span>
+        <span class="chip heat"><i></i>Bedroom below 16 °C</span>
+      </div>
+      <div class="sections">
+        <section class="section">
+          <h2>Heating</h2>
+          <div class="tile wide on" id="overview">
+            <div class="ic" data-icon="fire"></div><div class="b">Boiler off</div>
+            <div class="n">Heating</div>
+            <div class="rows" id="ov-rows"></div>
+          </div>
+        </section>
+        <section class="section" id="rooms">
+          <h2>Rooms</h2>
+        </section>
+        <section class="section">
+          <h2>Appliances</h2>
+          <div class="tile alert"><div class="ic" data-icon="washer"></div><div class="b">Finished</div><div class="n">Washer</div><div class="v small">Finished</div><div class="l">Done at 10:42</div></div>
+          <div class="tile"><div class="ic" data-icon="oven"></div><div class="b"></div><div class="n">Oven</div><div class="v small">Off</div><div class="l"></div></div>
+          <div class="tile"><div class="ic" data-icon="fridge"></div><div class="b"></div><div class="n">Fridge</div><div class="v small">Closed</div><div class="l">4 °C · freezer −18 °C</div></div>
+        </section>
+      </div>
+      <div class="footer"><span>Heating</span><span class="later">Lights</span><span class="later">Shades</span><span class="later">Cameras</span></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div><b>Header chips</b><p>Appear only when something needs attention. No chips means nothing to do.</p></div>
+    <div><b>Heated room tile</b><p>Big number is the room now. − / + change the target by 0.5 °C. Orange icon means the heating is on right now.</p></div>
+    <div><b>Office</b><p>Sensor only, marked "Not heated". No controls, so nothing to press by mistake.</p></div>
+    <div><b>Footer</b><p>Opens pop-ups. Heating first; lights, shades and cameras are planned components (greyed here).</p></div>
+  </div>
+</div>
+
+<script>
+const ICONS={
+  fire:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 3-1.5 4.5-1.5 7 0 1.2.8 2 2 2s2-1 1.6-2.6C16 9.5 18 12 18 15a6 6 0 1 1-12 0c0-4 3-6 6-13z"/></svg>',
+  radiator:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 5h2v14H5zm4 0h2v14H9zm4 0h2v14h-2zm4 0h2v14h-2zM3 8h18v1.5H3zm0 7h18v1.5H3z"/></svg>',
+  thermo:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 13.5V5a2 2 0 1 0-4 0v8.5a4 4 0 1 0 4 0zM12 20a2 2 0 0 1-1-3.7V9h2v7.3A2 2 0 0 1 12 20z"/></svg>',
+  washer:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v2h12V4zm6 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></svg>',
+  oven:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm0 5v11h14V8zm2 2h10v7H7z"/></svg>',
+  fridge:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v5h10V4zm0 7v9h10v-9zm1-5h2v2H8zm0 7h2v3H8z"/></svg>'
+};
+const rooms=[
+  {id:'kitchen',name:'Kitchen',cur:20.6,target:25,hum:48},
+  {id:'living',name:'Living room',cur:21.3,target:19,hum:44},
+  {id:'bedroom',name:'Bedroom',cur:15.8,target:19,hum:51},
+  {id:'office',name:'Office',cur:19.4,hum:46,bat:87,sensorOnly:true}
+];
+const heating=r=>!r.sensorOnly && r.cur < r.target - 0.5 + 0.0001;
+function render(){
+  const box=document.getElementById('rooms');
+  box.querySelectorAll('.tile').forEach(t=>t.remove());
+  rooms.forEach(r=>{
+    const t=document.createElement('div');
+    t.className='tile room'+(heating(r)?' on':'');
+    t.innerHTML = r.sensorOnly
+      ? `<div class="ic">${ICONS.thermo}</div><div class="b">Not heated</div><div class="n">${r.name}</div><div class="v">${r.cur.toFixed(1)}°</div><div class="l">${r.hum}% humidity · Battery ${r.bat}%</div>`
+      : `<div class="ic">${ICONS.radiator}</div><div class="b">${heating(r)?'Heating':'Idle'}</div><div class="n">${r.name}</div><div class="v">${r.cur.toFixed(1)}°</div><div class="l">${r.hum}% humidity</div>
+         <div class="c"><button id="m-${r.id}" aria-label="Lower ${r.name} target">−</button><span>${r.target.toFixed(1)}°</span><button id="p-${r.id}" aria-label="Raise ${r.name} target">+</button></div>`;
+    box.appendChild(t);
+    if(!r.sensorOnly){
+      t.querySelector('#m-'+r.id).onclick=()=>{r.target=Math.max(15,r.target-0.5);render();};
+      t.querySelector('#p-'+r.id).onclick=()=>{r.target=Math.min(28,r.target+0.5);render();};
+    }
+  });
+  const ov=document.getElementById('ov-rows');
+  const heated=rooms.filter(r=>!r.sensorOnly);
+  ov.innerHTML=heated.map(r=>`<div><span>${heating(r)?'<span class="dot">●</span> ':''}${r.name}</span><span>${r.cur.toFixed(1)}° <em>→ ${r.target.toFixed(1)}°</em></span></div>`).join('');
+  document.getElementById('overview').classList.toggle('on',heated.some(heating));
+}
+document.querySelectorAll('[data-icon]').forEach(el=>el.innerHTML=ICONS[el.dataset.icon]);
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  const s=document.getElementById('screen'); s.classList.remove('phone','tablet'); if(b.dataset.size!=='laptop') s.classList.add(b.dataset.size);
+});
+render();
+</script>

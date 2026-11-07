@@ -1,0 +1,146 @@
+# Example dashboard using every kit component, a pop-up and a footer bar.
+# Entity ids are examples: replace them with your own (Developer tools -> States).
+#
+# YAML mode: copy templates/ to /config/dashboards/kit/templates/ and this file to
+#   /config/dashboards/glass.yaml (see README "Install, YAML mode").
+# UI mode:   python3 tools/build_ui.py examples/full.yaml > out.yaml, paste out.yaml
+#   into the dashboard's raw configuration editor.
+
+button_card_templates: !include_dir_merge_named kit/templates
+
+views:
+  - title: Home
+    path: home
+    icon: mdi:home
+    type: sections
+    theme: glass
+    max_columns: 3
+    # Header chips: core badges, shown only when they matter.
+    badges:
+      - type: entity
+        entity: binary_sensor.front_door
+        show_name: true
+        name: Door open
+        visibility:
+          - condition: state
+            entity: binary_sensor.front_door
+            state: "on"
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Heating
+          - type: custom:button-card
+            template: kit_heat_overview
+            variables:
+              rooms:
+                - {name: Living room, climate: climate.living_room}
+                - {name: Bedroom, climate: climate.bedroom}
+              boiler: switch.boiler
+            tap_action:
+              action: navigate
+              navigation_path: "#heating"
+            grid_options: {columns: 12, rows: auto}
+          - type: custom:button-card
+            template: kit_heat_room
+            entity: climate.living_room
+            name: Living room
+            variables:
+              humidity: sensor.living_room_humidity
+              sensor: sensor.living_room_temperature
+            grid_options: {columns: 6, rows: auto}
+          - type: custom:button-card
+            template: kit_heat_room
+            entity: climate.bedroom
+            name: Bedroom
+            variables:
+              humidity: sensor.bedroom_humidity
+            grid_options: {columns: 6, rows: auto}
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Home
+          - type: custom:button-card
+            template: kit_weather
+            entity: weather.home
+            grid_options: {columns: 12, rows: auto}
+          - type: custom:button-card
+            template: kit_sensor_room
+            entity: sensor.office_temperature
+            name: Office
+            variables:
+              humidity: sensor.office_humidity
+              battery: sensor.office_battery
+            grid_options: {columns: 6, rows: auto}
+          - type: custom:button-card
+            template: kit_stats
+            name: Energy
+            variables:
+              items:
+                - {name: Power, entity: sensor.house_power, unit: W}
+                - {name: Today, entity: sensor.house_energy_today, unit: kWh, decimals: 1}
+            grid_options: {columns: 6, rows: auto}
+          - type: custom:button-card
+            template: kit_media
+            entity: media_player.living_room_speaker
+            name: Speaker
+            grid_options: {columns: 12, rows: auto}
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Appliances
+          - type: custom:button-card
+            template: kit_appliance
+            entity: sensor.washer_state
+            name: Washer
+            icon: mdi:washing-machine
+            variables:
+              active_states: [run, running]
+              alert_states: [finished, done]
+              progress: sensor.washer_progress
+              finish: sensor.washer_completion_time
+            grid_options: {columns: 6, rows: auto}
+          - type: custom:button-card
+            template: kit_appliance
+            entity: binary_sensor.fridge_door
+            name: Fridge
+            icon: mdi:fridge-outline
+            variables:
+              active_states: []
+              alert_states: ["on"]
+              state_names: {"on": Open, "off": Closed}
+              details:
+                - {entity: sensor.fridge_temperature, unit: " °C"}
+                - {entity: sensor.freezer_temperature, unit: " °C", label: freezer}
+            grid_options: {columns: 6, rows: auto}
+
+      # Pop-ups and footer. Full width (column_span = max_columns) so it sits below everything;
+      # kit_spacer keeps the last row from hiding behind the fixed footer bar.
+      - type: grid
+        column_span: 3
+        cards:
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: "#heating"
+            name: Heating
+            icon: mdi:fire
+            # bubble-card ignores theme variables for the pop-up backdrop: set it here.
+            bg_color: "#0c2380"
+            bg_opacity: 55
+            bg_blur: 16
+            cards:
+              - type: thermostat
+                entity: climate.living_room
+              - type: thermostat
+                entity: climate.bedroom
+          - type: custom:bubble-card
+            card_type: horizontal-buttons-stack
+            hide_gradient: true
+            1_name: Heating
+            1_icon: mdi:fire
+            1_link: "#heating"
+          - type: custom:button-card
+            template: kit_spacer
+            grid_options: {columns: 12, rows: auto}

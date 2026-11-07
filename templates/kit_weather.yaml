@@ -1,0 +1,67 @@
+# kit_weather: current weather from any weather.* entity (e.g. Met.no "weather.home").
+# Shows a coloured condition icon, the temperature, the condition and humidity / wind.
+# Forecast is not shown: HA only returns it through the weather.get_forecasts action, which a tile cannot call.
+kit_weather:
+  template: kit_tile
+  tap_action:
+    action: more-info
+  icon: >
+    [[[
+      const m = {'clear-night': 'weather-night', cloudy: 'weather-cloudy', exceptional: 'alert-circle-outline',
+        fog: 'weather-fog', hail: 'weather-hail', lightning: 'weather-lightning', 'lightning-rainy': 'weather-lightning-rainy',
+        partlycloudy: 'weather-partly-cloudy', pouring: 'weather-pouring', rainy: 'weather-rainy', snowy: 'weather-snowy',
+        'snowy-rainy': 'weather-snowy-rainy', sunny: 'weather-sunny', windy: 'weather-windy', 'windy-variant': 'weather-windy-variant'};
+      return 'mdi:' + (entity && m[entity.state] ? m[entity.state] : 'weather-cloudy');
+    ]]]
+  show_name: false
+  styles:
+    grid:
+      - grid-template-areas: '"i v" "n n" "l l"'
+      - grid-template-columns: auto 1fr
+      - grid-template-rows: 1fr auto auto
+      - column-gap: 12px
+    img_cell:
+      - width: 56px
+      - height: 56px
+    icon:
+      - width: 52px
+      - color: >
+          [[[
+            const s = entity ? entity.state : '';
+            if (['sunny'].includes(s)) return 'var(--kit-sun, #ffd60a)';
+            if (['partlycloudy', 'cloudy', 'fog', 'windy', 'windy-variant'].includes(s)) return 'var(--kit-cool, #64d2ff)';
+            if (['clear-night'].includes(s)) return 'var(--kit-text, rgba(255, 255, 255, 0.95))';
+            return 'var(--kit-accent, #0a84ff)';
+          ]]]
+    custom_fields:
+      v:
+        - align-self: center
+        - font-size: 44px
+        - font-weight: 500
+      n:
+        - justify-self: start
+        - font-size: 17px
+        - font-weight: 600
+        - margin-top: 6px
+  custom_fields:
+    v: >
+      [[[
+        const t = entity && entity.attributes.temperature;
+        return (t === undefined || t === null) ? '—' : `${Math.round(t)}°`;
+      ]]]
+    n: >
+      [[[
+        if (!entity) return '';
+        const n = {'clear-night': 'Clear', partlycloudy: 'Partly cloudy', 'lightning-rainy': 'Thunderstorm',
+          'snowy-rainy': 'Sleet', 'windy-variant': 'Windy', exceptional: 'Warning'};
+        const s = entity.state;
+        return n[s] || (s.charAt(0).toUpperCase() + s.slice(1));
+      ]]]
+    l: >
+      [[[
+        if (!entity) return '';
+        const a = entity.attributes, parts = [];
+        if (a.humidity != null) parts.push(`${Math.round(a.humidity)}% humidity`);
+        if (a.wind_speed != null) parts.push(`Wind ${Math.round(a.wind_speed)} ${a.wind_speed_unit || ''}`.trim());
+        return parts.join(' · ');
+      ]]]

@@ -1,0 +1,20 @@
+# kit_sensor_room: a room with a climate sensor but no heating control.
+# entity = temperature sensor. variables: humidity, battery (optional sensor ids), note (text, default "Not heated").
+kit_sensor_room:
+  template: kit_tile
+  icon: mdi:thermometer
+  variables:
+    humidity: null
+    battery: null
+    note: Not heated
+  custom_fields:
+    b: '[[[ return variables.note || ""; ]]]'
+    v: >
+      [[[ return (entity && !isNaN(parseFloat(entity.state))) ? `${parseFloat(entity.state).toFixed(1)}°` : '—'; ]]]
+    l: >
+      [[[
+        const parts = [];
+        if (variables.humidity && states[variables.humidity] && !isNaN(parseFloat(states[variables.humidity].state))) parts.push(`${states[variables.humidity].state}% humidity`);
+        if (variables.battery && states[variables.battery] && !isNaN(parseFloat(states[variables.battery].state))) parts.push(`Battery ${states[variables.battery].state}%`);
+        return parts.join(' · ');
+      ]]]

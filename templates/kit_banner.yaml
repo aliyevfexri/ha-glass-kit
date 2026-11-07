@@ -1,0 +1,47 @@
+# kit_banner: coloured header with 1-3 big numbers side by side (fridge | freezer, now | target).
+# Made for the top of a pop-up, like the appliance apps do it.
+# variables:
+#   items: list of {label, entity, unit}; entity state is shown big, unit appended (e.g. "°C")
+#   gradient: background (default blue accent gradient; use var(--kit-heat) tones for an oven)
+#   note: optional small line under the numbers (e.g. "Smart Control off")
+kit_banner:
+  template: kit_tile
+  show_icon: false
+  show_name: false
+  tap_action:
+    action: none
+  variables:
+    items: []
+    gradient: "linear-gradient(135deg, #1aa0f0 0%, #2f6bff 100%)"
+    note: ''
+  styles:
+    card:
+      - background: '[[[ return variables.gradient; ]]]'
+      - border: none
+      - color: '#fff'
+    grid:
+      - grid-template-areas: '"row" "note"'
+      - grid-template-columns: 1fr
+      - grid-template-rows: 1fr auto
+    custom_fields:
+      row:
+        - justify-self: stretch
+      note:
+        - justify-self: center
+        - font-size: var(--kit-size-label, 12px)
+        - color: 'rgba(255, 255, 255, 0.85)'
+  custom_fields:
+    row: >
+      [[[
+        const bad = ['unavailable', 'unknown', ''];
+        const cells = (variables.items || []).map((it) => {
+          const st = it.entity && states[it.entity];
+          const n = st ? parseFloat(st.state) : NaN;
+          const v = !st || bad.includes(st.state) ? '—' : (isNaN(n) ? st.state : `${n}${it.unit || ''}`);
+          return `<div style="flex:1;text-align:center">
+            <div style="font-size:14px;opacity:.9">${it.label || ''}</div>
+            <div style="font-size:34px;font-weight:600;line-height:1.2">${v}</div></div>`;
+        });
+        return `<div style="display:flex;gap:8px;padding:6px 0">${cells.join('')}</div>`;
+      ]]]
+    note: '[[[ return variables.note || ""; ]]]'

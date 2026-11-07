@@ -107,13 +107,13 @@ Any appliance or two-state device: washer, dryer, dishwasher, oven, fridge, a do
 | `progress` | entity id | `null` | Percent sensor, shown while active ("70%") |
 | `finish` | entity id | `null` | Timestamp sensor, shown while active ("ready 14:20") |
 | `alert` | entity id | `null` | Extra entity that raises the alert look while it is `on` (e.g. an `input_boolean` "washer done" set by an automation) |
-| `alert_text` | text | `Done` | Text of the red status pill in an alert state or while `alert` is on |
+| `alert_text` | text | `null` | Text of the red status pill; empty shows `Done` while `alert` is on and `Alert` for `alert_states` |
 | `popup` | text | `null` | bubble-card pop-up hash (e.g. `"#oven"`); tapping the tile opens it instead of more-info |
 | `toggle` | entity id | `null` | Light / switch for the round quick button (e.g. oven lamp); tap toggles it |
 | `toggle_icon` | icon | `mdi:lightbulb` | Quick button icon |
 | `toggle_color` | CSS colour | `var(--kit-sun)` | Quick button colour while on |
 
-Layout: icon + red status pill (only when something needs attention), name, value with the quick button beside it, label line, progress bar while active. Binary sensors on the label line use HA's own words (door: Open / Closed). Quote colours with a `#` (`"var(--kit-cool, #64d2ff)"`), or YAML reads the rest as a comment.
+Layout: icon (top left) + red status pill (only when something needs attention), name, value with the quick button beside it, label line, progress bar while active. Rows are fixed and the label line and progress bar always keep their space, so tiles in one row have the same height whether or not they have a button, label or progress. Binary sensors on the label line use HA's own words (door: Open / Closed). Quote colours with a `#` (`"var(--kit-cool, #64d2ff)"`), or YAML reads the rest as a comment.
 
 Quote `"on"`, `"off"`, `"yes"`, `"no"` in lists and maps, or YAML turns them into booleans.
 
@@ -172,6 +172,7 @@ One on/off control as a full-width glass row: icon, name, optional note, On/Off 
 |---|---|---|---|
 | `on_color` | CSS colour | `var(--kit-accent)` | Icon and pill colour while on |
 | `note` | text | `''` | Small text under the name |
+| `square` | bool | `false` | Square tile instead of a row: icon, small name, big On/Off stacked and centred (112 px high, same as `kit_value`). Put two side by side in a 2-column `grid`, like the SmartThings app |
 
 ```yaml
 type: custom:button-card
@@ -199,6 +200,56 @@ template: kit_setpoint
 entity: number.fridge_temperature
 name: Fridge temperature
 icon: mdi:fridge-top
+```
+
+## kit_banner
+Coloured header for a pop-up: two or three big numbers side by side on a gradient (fridge / freezer temperature, oven now / target). Read-only; tap does nothing.
+
+**Entity**: none; list the values in `items`.
+
+| Variable | Type | Default | Meaning |
+|---|---|---|---|
+| `items` | list of `{label, entity, unit}` | `[]` | Values to show; unavailable shows `—` |
+| `gradient` | CSS background | blue gradient | e.g. `"linear-gradient(135deg, #ff9f0a 0%, #ff6b35 100%)"` for an oven |
+| `note` | text | `''` | Small line under the values |
+
+```yaml
+type: custom:button-card
+template: kit_banner
+variables:
+  items:
+    - {label: Fridge, entity: sensor.fridge_temperature, unit: "°C"}
+    - {label: Freezer, entity: sensor.freezer_temperature, unit: "°C"}
+```
+
+## kit_value
+Square info tile: centred icon, small name, big value. For settings and states shown two per row in a pop-up (washer temperature and spin, oven mode, door). 112 px high, same as a square `kit_toggle`. Tap opens more-info (a `select` can be changed there).
+
+**Entity** (**required**): any entity; its state is the value (binary sensors use HA's wording).
+
+| Variable | Type | Default | Meaning |
+|---|---|---|---|
+| `unit` | text | `''` | Appended to the value, e.g. `" rpm"` |
+| `state_names` | map | `{}` | Rename states |
+| `icon_color` | CSS colour | `var(--kit-accent)` | Icon colour |
+
+```yaml
+type: grid
+columns: 2
+square: false
+cards:
+  - type: custom:button-card
+    template: kit_value
+    entity: select.washer_water_temperature
+    name: Temp.
+    icon: mdi:thermometer
+    variables: {unit: "°C", icon_color: "var(--kit-alert, #ff453a)"}
+  - type: custom:button-card
+    template: kit_value
+    entity: select.washer_spin_level
+    name: Spin
+    icon: mdi:autorenew
+    variables: {unit: " rpm"}
 ```
 
 ## kit_weather

@@ -1,0 +1,48 @@
+# kit_value: square info tile: icon, label, big value. For settings shown side by side in a pop-up
+# (washer temperature / spin, oven mode / door). Tap opens more-info, where a select can be changed.
+# entity = any entity; its state is the value.
+# variables:
+#   unit: text appended to the value (e.g. " rpm")
+#   state_names: map state -> shown text (e.g. {cold: Cold, none: "—"})
+#   icon_color: icon colour (default var(--kit-accent))
+kit_value:
+  template: kit_tile
+  show_name: true
+  variables:
+    unit: ''
+    state_names: {}
+    icon_color: "var(--kit-accent, #0a84ff)"
+  styles:
+    card:
+      - height: 112px
+    grid:
+      - grid-template-areas: '"i" "n" "v"'
+      - grid-template-columns: 1fr
+      - grid-template-rows: 32px auto auto
+      - justify-items: center
+      - align-content: center
+      - row-gap: 4px
+    img_cell:
+      - justify-self: center
+      - justify-content: center
+    icon:
+      - color: '[[[ return variables.icon_color; ]]]'
+    name:
+      - justify-self: center
+      - font-size: var(--kit-size-label, 12px)
+      - font-weight: 500
+      - color: var(--kit-text-dim, rgba(255, 255, 255, 0.68))
+    custom_fields:
+      v:
+        - justify-self: center
+        - font-size: 22px
+  custom_fields:
+    v: >
+      [[[
+        if (!entity || ['unavailable', 'unknown'].includes(entity.state)) return '—';
+        const names = variables.state_names || {};
+        if (names[entity.state] !== undefined) return names[entity.state];
+        if (entity.entity_id.startsWith('binary_sensor.') && typeof helpers !== 'undefined' && helpers.localize) return helpers.localize(entity);
+        const s = String(entity.state).replace(/_/g, ' ');
+        return (isNaN(parseFloat(s)) ? s.charAt(0).toUpperCase() + s.slice(1) : s) + (variables.unit || '');
+      ]]]

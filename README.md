@@ -20,8 +20,10 @@ Status: **0.1.0**, running daily in one home on Home Assistant 2026.11. Issues a
 | [`kit_sensor_room`](docs/components.md#kit_sensor_room) | temperature `sensor.*` | Sensor-only room: temperature, humidity, battery |
 | [`kit_heat_overview`](docs/components.md#kit_heat_overview) | (list of `climate.*`) | All heated rooms at a glance + boiler relay |
 | [`kit_appliance`](docs/components.md#kit_appliance) | any | Washer, oven, fridge, door: state, status pill, details, progress bar, ready time, quick button, opens a pop-up |
-| [`kit_toggle`](docs/components.md#kit_toggle) | light / switch / input_boolean | One on/off control as a row (pop-ups) |
+| [`kit_toggle`](docs/components.md#kit_toggle) | light / switch / input_boolean | One on/off control as a row, or a square tile with `square: true` (pop-ups) |
 | [`kit_setpoint`](docs/components.md#kit_setpoint) | `number.*` / `input_number.*` | A number setting with − / + as a row (fridge temperature) |
+| [`kit_banner`](docs/components.md#kit_banner) | (list of sensors) | Coloured pop-up header with big numbers (fridge / freezer, oven now / target) |
+| [`kit_value`](docs/components.md#kit_value) | any | Square tile: icon, name, big value (washer temp / spin, door) |
 | [`kit_weather`](docs/components.md#kit_weather) | `weather.*` | Condition icon, temperature, humidity, wind |
 | [`kit_media`](docs/components.md#kit_media) | `media_player.*` | Now playing, volume − / +, play/pause |
 | [`kit_stats`](docs/components.md#kit_stats) | (list of sensors) | 2–3 numbers side by side (power, energy, speed) |

@@ -1,1 +1,1 @@
-Screenshots for the main README go here (`screenshot.png`: dark theme, laptop width, example entities only).
+Screenshots for the main README go here (`screenshot.jpg`: dark theme, laptop width, zoomed out to show the whole dashboard).

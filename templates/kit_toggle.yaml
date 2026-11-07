@@ -3,21 +3,35 @@
 # variables:
 #   on_color: colour while on (default var(--kit-accent))
 #   note: optional small text under the name (e.g. "Boost cooling for 2.5 h")
+#   square: true -> square tile (icon, name, On/Off stacked), for two toggles side by side
 kit_toggle:
   template: kit_tile
   variables:
     on_color: "var(--kit-accent, #0a84ff)"
     note: ''
+    square: false
   tap_action:
     action: toggle
   styles:
+    card:
+      - height: '[[[ return variables.square ? "112px" : "auto"; ]]]'
     grid:
-      - grid-template-areas: '"i n s" "i l s"'
-      - grid-template-columns: 40px 1fr auto
-      - grid-template-rows: auto auto
+      - grid-template-areas: '[[[ return variables.square ? `"i" "n" "s"` : `"i n s" "i l s"`; ]]]'
+      - grid-template-columns: '[[[ return variables.square ? "1fr" : "40px 1fr auto"; ]]]'
+      - grid-template-rows: '[[[ return variables.square ? "32px auto auto" : "auto auto"; ]]]'
       - column-gap: 10px
+      - row-gap: '[[[ return variables.square ? "4px" : "2px"; ]]]'
+      - align-content: center
+      - justify-items: '[[[ return variables.square ? "center" : "stretch"; ]]]'
+    img_cell:
+      - justify-self: '[[[ return variables.square ? "center" : "start"; ]]]'
+      - justify-content: '[[[ return variables.square ? "center" : "flex-start"; ]]]'
     name:
       - align-self: end
+      - justify-self: '[[[ return variables.square ? "center" : "start"; ]]]'
+      - font-size: '[[[ return variables.square ? "var(--kit-size-label, 12px)" : "var(--kit-size-name, 15px)"; ]]]'
+      - font-weight: '[[[ return variables.square ? "500" : "600"; ]]]'
+      - color: '[[[ return variables.square ? "var(--kit-text-dim, rgba(255, 255, 255, 0.68))" : "var(--kit-text, rgba(255, 255, 255, 0.95))"; ]]]'
     icon:
       - color: >
           [[[ return entity && entity.state === 'on' ? variables.on_color : 'var(--kit-off, rgba(255, 255, 255, 0.55))'; ]]]
@@ -25,16 +39,25 @@ kit_toggle:
       l:
         - justify-self: start
         - align-self: start
+        - display: '[[[ return variables.square ? "none" : "block"; ]]]'
       s:
         - align-self: center
-        - padding: 4px 12px
+        - justify-self: '[[[ return variables.square ? "center" : "end"; ]]]'
+        - padding: '[[[ return variables.square ? "0" : "4px 12px"; ]]]'
         - border-radius: 999px
-        - font-size: var(--kit-size-label, 12px)
+        - font-size: '[[[ return variables.square ? "22px" : "var(--kit-size-label, 12px)"; ]]]'
         - font-weight: 600
         - background: >
-            [[[ return entity && entity.state === 'on' ? variables.on_color : 'var(--kit-surface-strong, rgba(255, 255, 255, 0.10))'; ]]]
+            [[[
+              if (variables.square) return 'none';
+              return entity && entity.state === 'on' ? variables.on_color : 'var(--kit-surface-strong, rgba(255, 255, 255, 0.10))';
+            ]]]
         - color: >
-            [[[ return entity && entity.state === 'on' ? '#fff' : 'var(--kit-text-dim, rgba(255, 255, 255, 0.68))'; ]]]
+            [[[
+              const on = entity && entity.state === 'on';
+              if (variables.square) return on ? variables.on_color : 'var(--kit-text, rgba(255, 255, 255, 0.95))';
+              return on ? '#fff' : 'var(--kit-text-dim, rgba(255, 255, 255, 0.68))';
+            ]]]
   custom_fields:
     l: '[[[ return variables.note || ""; ]]]'
     s: >

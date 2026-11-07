@@ -12,7 +12,7 @@
 #   progress: optional percent sensor; while active shows "70%" and a progress bar
 #   finish: optional timestamp sensor, shown while active ("ready 14:20")
 #   alert: optional entity id that raises the alert look when it is "on" (e.g. a "washer done" helper)
-#   alert_text: text of the red status pill shown in an alert state or while `alert` is on (default "Done")
+#   alert_text: text of the red status pill (default "Done" while `alert` is on, "Alert" for alert_states)
 #   popup: optional bubble-card pop-up hash; tap opens it
 #   toggle: optional light/switch entity for the round quick button (e.g. oven lamp); tap toggles it
 #   toggle_icon: icon of the quick button (default mdi:lightbulb)
@@ -30,7 +30,7 @@ kit_appliance:
     progress: null
     finish: null
     alert: null
-    alert_text: Done
+    alert_text: null
     popup: null
     toggle: null
     toggle_icon: mdi:lightbulb
@@ -39,10 +39,14 @@ kit_appliance:
     action: '[[[ return variables.popup ? "navigate" : "more-info"; ]]]'
     navigation_path: '[[[ return variables.popup || ""; ]]]'
   styles:
+    # Fixed rows so every appliance tile has the same height, with or without button, label or progress.
     grid:
       - grid-template-areas: '"i b" "n n" "v t" "l l" "p p"'
       - grid-template-columns: 1fr auto
-      - grid-template-rows: auto 1fr auto auto auto
+      - grid-template-rows: 32px 1fr 40px 16px 14px
+    img_cell:
+      - justify-self: start
+      - justify-content: flex-start
     icon:
       - color: >
           [[[
@@ -71,6 +75,13 @@ kit_appliance:
             ]]]
       v:
         - font-size: 22px
+        - align-self: center
+      l:
+        - align-self: center
+        - white-space: nowrap
+        - overflow: hidden
+        - text-overflow: ellipsis
+        - max-width: 100%
       t:
         - justify-self: end
         - align-self: center
@@ -113,16 +124,16 @@ kit_appliance:
           const st = d.entity && states[d.entity];
           if (st && !bad.includes(st.state)) parts.push(`${d.label ? d.label + ' ' : ''}${show(st)}${d.unit || ''}`);
         }
-        return parts.join(' · ');
+        return parts.length ? parts.join(' · ') : '\u00a0';
       ]]]
     p: >
       [[[
         const active = entity && (variables.active_states || []).includes(String(entity.state).toLowerCase());
         const ps = variables.progress && states[variables.progress];
         const v = ps ? parseFloat(ps.state) : NaN;
-        if (!active || isNaN(v)) return '';
-        const w = Math.max(0, Math.min(100, v));
-        return `<div style="margin-top:8px;height:6px;border-radius:3px;background:var(--kit-surface-strong, rgba(255,255,255,0.10));overflow:hidden">
+        const show = active && !isNaN(v);
+        const w = show ? Math.max(0, Math.min(100, v)) : 0;
+        return `<div style="visibility:${show ? 'visible' : 'hidden'};margin-top:8px;height:6px;border-radius:3px;background:var(--kit-surface-strong, rgba(255,255,255,0.10));overflow:hidden">
           <div style="width:${w}%;height:100%;border-radius:3px;background:var(--kit-accent, #0a84ff)"></div></div>`;
       ]]]
     t:

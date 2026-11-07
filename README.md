@@ -2,8 +2,9 @@
 
 A small, entity-agnostic kit for **glass / iOS-style Home Assistant dashboards**: ten `custom:button-card` templates plus a dark/light theme. Tiles are frosted glass over a colourful background, readable at a glance, and reflow from one column on a phone to three on a laptop. Every component takes its entities as variables, so the same files work in any home.
 
-> **Screenshot coming soon.** <!-- Replace with: ![Dashboard built with the kit](docs/images/screenshot.png) (dark theme, laptop width, example entities). -->
-> Meanwhile, [docs/mockup.html](docs/mockup.html) is an interactive layout preview (download it and open it in a browser).
+![Dashboard built with the kit: heating overview, room tiles, appliances, weather and media (dark theme, laptop width)](docs/images/screenshot.jpg)
+
+An interactive layout preview is in [docs/mockup.html](docs/mockup.html) (download it and open it in a browser).
 
 - **Two dependencies only**: `button-card` and `bubble-card` (pop-ups and footer, optional). No `card-mod`.
 - **Works offline**: no web fonts, no hot-linked images.

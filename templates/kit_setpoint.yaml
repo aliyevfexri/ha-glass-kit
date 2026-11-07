@@ -1,0 +1,106 @@
+# kit_setpoint: a number setting with − / + as a glass row (fridge temperature, target humidity...).
+# entity = a number.* or input_number.* entity. Step, min and max come from its attributes.
+# variables:
+#   note: optional small text under the name (e.g. "Range 1–7 °C")
+kit_setpoint:
+  template: kit_tile
+  variables:
+    note: ''
+  tap_action:
+    action: more-info
+  styles:
+    grid:
+      - grid-template-areas: '"i n c" "i l c"'
+      - grid-template-columns: 40px 1fr auto
+      - grid-template-rows: auto auto
+      - column-gap: 10px
+    name:
+      - align-self: end
+    icon:
+      - color: "var(--kit-cool, #64d2ff)"
+    custom_fields:
+      l:
+        - justify-self: start
+        - align-self: start
+      c:
+        - align-self: center
+  custom_fields:
+    l: >
+      [[[
+        if (variables.note) return variables.note;
+        if (!entity) return '';
+        const a = entity.attributes, u = a.unit_of_measurement || '';
+        return (a.min !== undefined && a.max !== undefined) ? `Range ${a.min} to ${a.max} ${u}` : '';
+      ]]]
+    c:
+      card:
+        type: custom:button-card
+        entity: '[[[ return entity ? entity.entity_id : ""; ]]]'
+        show_icon: false
+        show_name: false
+        show_state: false
+        tap_action:
+          action: none
+        styles:
+          card:
+            - background: none
+            - border: none
+            - box-shadow: none
+            - padding: 0
+          grid:
+            - grid-template-areas: '"minus value plus"'
+            - grid-template-columns: 40px 64px 40px
+            - align-items: center
+          custom_fields:
+            value:
+              - font-size: 20px
+              - font-weight: 600
+              - color: var(--kit-text, rgba(255, 255, 255, 0.95))
+        custom_fields:
+          value: >
+            [[[
+              if (!entity || isNaN(parseFloat(entity.state))) return '—';
+              return `${parseFloat(entity.state)}${entity.attributes.unit_of_measurement === '°C' || entity.attributes.unit_of_measurement === '°F' ? '°' : ''}`;
+            ]]]
+          minus:
+            card:
+              type: custom:button-card
+              template: kit_button
+              icon: mdi:minus
+              styles:
+                card:
+                  - width: 40px
+                  - height: 40px
+              tap_action:
+                action: '[[[ return entity && !isNaN(parseFloat(entity.state)) ? "perform-action" : "none"; ]]]'
+                perform_action: '[[[ return entity && entity.entity_id.startsWith("input_number.") ? "input_number.set_value" : "number.set_value"; ]]]'
+                target:
+                  entity_id: '[[[ return entity ? entity.entity_id : ""; ]]]'
+                data:
+                  value: >
+                    [[[
+                      if (!entity) return null;
+                      const a = entity.attributes, s = a.step || 1;
+                      return Math.round(Math.max(a.min, parseFloat(entity.state) - s) * 100) / 100;
+                    ]]]
+          plus:
+            card:
+              type: custom:button-card
+              template: kit_button
+              icon: mdi:plus
+              styles:
+                card:
+                  - width: 40px
+                  - height: 40px
+              tap_action:
+                action: '[[[ return entity && !isNaN(parseFloat(entity.state)) ? "perform-action" : "none"; ]]]'
+                perform_action: '[[[ return entity && entity.entity_id.startsWith("input_number.") ? "input_number.set_value" : "number.set_value"; ]]]'
+                target:
+                  entity_id: '[[[ return entity ? entity.entity_id : ""; ]]]'
+                data:
+                  value: >
+                    [[[
+                      if (!entity) return null;
+                      const a = entity.attributes, s = a.step || 1;
+                      return Math.round(Math.min(a.max, parseFloat(entity.state) + s) * 100) / 100;
+                    ]]]

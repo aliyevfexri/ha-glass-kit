@@ -10,6 +10,8 @@ Sizes: `grid_options: {columns: 6, rows: auto}` for a normal tile, `columns: 12`
 - [kit_sensor_room](#kit_sensor_room)
 - [kit_heat_overview](#kit_heat_overview)
 - [kit_appliance](#kit_appliance)
+- [kit_toggle](#kit_toggle)
+- [kit_setpoint](#kit_setpoint)
 - [kit_weather](#kit_weather)
 - [kit_media](#kit_media)
 - [kit_stats](#kit_stats)
@@ -104,6 +106,14 @@ Any appliance or two-state device: washer, dryer, dishwasher, oven, fridge, a do
 | `details` | list of `{entity, unit, label}` | `[]` | More extras, e.g. freezer temperature |
 | `progress` | entity id | `null` | Percent sensor, shown while active ("70%") |
 | `finish` | entity id | `null` | Timestamp sensor, shown while active ("ready 14:20") |
+| `alert` | entity id | `null` | Extra entity that raises the alert look while it is `on` (e.g. an `input_boolean` "washer done" set by an automation) |
+| `alert_text` | text | `Done` | Text of the red status pill in an alert state or while `alert` is on |
+| `popup` | text | `null` | bubble-card pop-up hash (e.g. `"#oven"`); tapping the tile opens it instead of more-info |
+| `toggle` | entity id | `null` | Light / switch for the round quick button (e.g. oven lamp); tap toggles it |
+| `toggle_icon` | icon | `mdi:lightbulb` | Quick button icon |
+| `toggle_color` | CSS colour | `var(--kit-sun)` | Quick button colour while on |
+
+Layout: icon + red status pill (only when something needs attention), name, value with the quick button beside it, label line, progress bar while active. Binary sensors on the label line use HA's own words (door: Open / Closed). Quote colours with a `#` (`"var(--kit-cool, #64d2ff)"`), or YAML reads the rest as a comment.
 
 Quote `"on"`, `"off"`, `"yes"`, `"no"` in lists and maps, or YAML turns them into booleans.
 
@@ -136,6 +146,59 @@ variables:
     - {entity: sensor.fridge_temperature, unit: " °C"}
     - {entity: sensor.freezer_temperature, unit: " °C", label: freezer}
 grid_options: {columns: 6, rows: auto}
+```
+
+```yaml
+# Oven with a light button that opens a pop-up
+type: custom:button-card
+template: kit_appliance
+entity: sensor.oven_machine_state
+name: Oven
+icon: mdi:stove
+variables:
+  popup: "#oven"
+  toggle: light.oven_light
+  active_states: [running]
+  state_names: {ready: "Off", running: Cooking}
+grid_options: {columns: 6, rows: auto}
+```
+
+## kit_toggle
+One on/off control as a full-width glass row: icon, name, optional note, On/Off pill. Tap toggles. Made for pop-ups (oven light, Power Cool, "laundry waiting").
+
+**Entity** (**required**): anything `homeassistant.toggle` understands (light, switch, input_boolean, fan...).
+
+| Variable | Type | Default | Meaning |
+|---|---|---|---|
+| `on_color` | CSS colour | `var(--kit-accent)` | Icon and pill colour while on |
+| `note` | text | `''` | Small text under the name |
+
+```yaml
+type: custom:button-card
+template: kit_toggle
+entity: switch.fridge_power_cool
+name: Power Cool
+icon: mdi:snowflake
+variables:
+  on_color: "var(--kit-cool, #64d2ff)"
+  note: Fast cooling of the fridge
+```
+
+## kit_setpoint
+A number setting as a glass row with − / +. Step, min and max come from the entity's attributes; the note line shows the range unless you set `note`.
+
+**Entity** (**required**): a `number.*` or `input_number.*` entity.
+
+| Variable | Type | Default | Meaning |
+|---|---|---|---|
+| `note` | text | `''` | Replaces the "Range a to b" line |
+
+```yaml
+type: custom:button-card
+template: kit_setpoint
+entity: number.fridge_temperature
+name: Fridge temperature
+icon: mdi:fridge-top
 ```
 
 ## kit_weather

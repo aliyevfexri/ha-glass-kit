@@ -1,14 +1,22 @@
 # kit_appliance: any appliance (washer, oven, fridge, dishwasher...).
-# entity = main state entity (shown as the value, e.g. "Running", "Off").
+# entity = main state entity (shown as the big value, e.g. "Running", "Off").
+# Layout: icon + status pill (top), name, value, label line, optional progress bar, optional round quick button.
+# Tap opens `popup` (a bubble-card pop-up hash, e.g. "#oven") when set, else more-info.
 # variables:
 #   detail: optional entity id for the label line (e.g. remaining time, temperature, door)
 #   detail_unit: optional text appended to the detail state
-#   active_states: states that mean "working" -> accent icon (default: on, running, run)
-#   alert_states: states that need attention -> alert icon (default: open, finished, done)
+#   active_states: states that mean "working" -> accent icon + pill (default: on, running, run)
+#   alert_states: states that need attention -> red icon + pill (default: open, finished, done)
 #   state_names: optional map state -> shown text (e.g. {"on": Open, "off": Closed} for a door sensor)
 #   details: optional list of extra {entity, unit, label} shown on the label line (e.g. freezer temperature)
-#   progress: optional percent sensor, shown while active ("70%")
+#   progress: optional percent sensor; while active shows "70%" and a progress bar
 #   finish: optional timestamp sensor, shown while active ("ready 14:20")
+#   alert: optional entity id that raises the alert look when it is "on" (e.g. a "washer done" helper)
+#   alert_text: text of the red status pill shown in an alert state or while `alert` is on (default "Done")
+#   popup: optional bubble-card pop-up hash; tap opens it
+#   toggle: optional light/switch entity for the round quick button (e.g. oven lamp); tap toggles it
+#   toggle_icon: icon of the quick button (default mdi:lightbulb)
+#   toggle_color: quick button colour while on (default var(--kit-sun), yellow)
 kit_appliance:
   template: kit_tile
   icon: mdi:washing-machine
@@ -21,20 +29,62 @@ kit_appliance:
     details: []
     progress: null
     finish: null
+    alert: null
+    alert_text: Done
+    popup: null
+    toggle: null
+    toggle_icon: mdi:lightbulb
+    toggle_color: "var(--kit-sun, #ffd60a)"
+  tap_action:
+    action: '[[[ return variables.popup ? "navigate" : "more-info"; ]]]'
+    navigation_path: '[[[ return variables.popup || ""; ]]]'
   styles:
+    grid:
+      - grid-template-areas: '"i b" "n n" "v t" "l l" "p p"'
+      - grid-template-columns: 1fr auto
+      - grid-template-rows: auto 1fr auto auto auto
     icon:
       - color: >
           [[[
-            if (!entity) return 'var(--kit-off, rgba(255, 255, 255, 0.55))';
-            const st = String(entity.state).toLowerCase();
-            if ((variables.alert_states || []).includes(st)) return 'var(--kit-alert, #ff453a)';
+            const st = entity ? String(entity.state).toLowerCase() : '';
+            const al = variables.alert && states[variables.alert] && states[variables.alert].state === 'on';
+            if (al || (variables.alert_states || []).includes(st)) return 'var(--kit-alert, #ff453a)';
             if ((variables.active_states || []).includes(st)) return 'var(--kit-accent, #0a84ff)';
             return 'var(--kit-off, rgba(255, 255, 255, 0.55))';
           ]]]
     custom_fields:
+      b:
+        - padding: 2px 8px
+        - border-radius: 999px
+        - font-weight: 600
+        - background: >
+            [[[
+              const st = entity ? String(entity.state).toLowerCase() : '';
+              const al = variables.alert && states[variables.alert] && states[variables.alert].state === 'on';
+              return (al || (variables.alert_states || []).includes(st)) ? 'var(--kit-alert, #ff453a)' : 'transparent';
+            ]]]
+        - color: >
+            [[[
+              const st = entity ? String(entity.state).toLowerCase() : '';
+              const al = variables.alert && states[variables.alert] && states[variables.alert].state === 'on';
+              return (al || (variables.alert_states || []).includes(st)) ? '#fff' : 'var(--kit-text-dim, rgba(255, 255, 255, 0.68))';
+            ]]]
       v:
         - font-size: 22px
+      t:
+        - justify-self: end
+        - align-self: center
+      p:
+        - justify-self: stretch
   custom_fields:
+    b: >
+      [[[
+        if (!entity) return '';
+        const st = String(entity.state).toLowerCase();
+        if (variables.alert && states[variables.alert] && states[variables.alert].state === 'on') return variables.alert_text || 'Done';
+        if ((variables.alert_states || []).includes(st)) return variables.alert_text || 'Alert';
+        return '';
+      ]]]
     v: >
       [[[
         if (!entity) return '—';
@@ -47,6 +97,8 @@ kit_appliance:
       [[[
         const bad = ['unavailable', 'unknown', 'none', ''];
         const pretty = (v) => { const t = String(v).replace(/_/g, ' '); return isNaN(parseFloat(t)) ? t.charAt(0).toUpperCase() + t.slice(1) : t; };
+        // binary sensors use HA's own wording (door: Open / Closed) instead of on / off
+        const show = (st) => st.entity_id.startsWith('binary_sensor.') && typeof helpers !== 'undefined' && helpers.localize ? helpers.localize(st) : pretty(st.state);
         const parts = [];
         const active = entity && (variables.active_states || []).includes(String(entity.state).toLowerCase());
         if (active && variables.progress && states[variables.progress] && !isNaN(parseFloat(states[variables.progress].state)))
@@ -56,10 +108,41 @@ kit_appliance:
           if (!isNaN(d) && d > new Date()) parts.push(`ready ${d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`);
         }
         if (variables.detail && states[variables.detail] && !bad.includes(states[variables.detail].state))
-          parts.push(`${pretty(states[variables.detail].state)}${variables.detail_unit || ''}`);
+          parts.push(`${show(states[variables.detail])}${variables.detail_unit || ''}`);
         for (const d of (variables.details || [])) {
           const st = d.entity && states[d.entity];
-          if (st && !bad.includes(st.state)) parts.push(`${d.label ? d.label + ' ' : ''}${pretty(st.state)}${d.unit || ''}`);
+          if (st && !bad.includes(st.state)) parts.push(`${d.label ? d.label + ' ' : ''}${show(st)}${d.unit || ''}`);
         }
         return parts.join(' · ');
       ]]]
+    p: >
+      [[[
+        const active = entity && (variables.active_states || []).includes(String(entity.state).toLowerCase());
+        const ps = variables.progress && states[variables.progress];
+        const v = ps ? parseFloat(ps.state) : NaN;
+        if (!active || isNaN(v)) return '';
+        const w = Math.max(0, Math.min(100, v));
+        return `<div style="margin-top:8px;height:6px;border-radius:3px;background:var(--kit-surface-strong, rgba(255,255,255,0.10));overflow:hidden">
+          <div style="width:${w}%;height:100%;border-radius:3px;background:var(--kit-accent, #0a84ff)"></div></div>`;
+      ]]]
+    t:
+      card:
+        type: custom:button-card
+        template: kit_button
+        entity: '[[[ return variables.toggle || ""; ]]]'
+        icon: '[[[ return variables.toggle_icon || "mdi:lightbulb"; ]]]'
+        tap_action:
+          action: '[[[ return variables.toggle ? "toggle" : "none"; ]]]'
+        styles:
+          card:
+            - display: '[[[ return variables.toggle ? "block" : "none"; ]]]'
+            - width: 40px
+            - height: 40px
+            - background: >
+                [[[ return (variables.toggle && states[variables.toggle] && states[variables.toggle].state === 'on') ? variables.toggle_color : 'var(--kit-surface-strong, rgba(255, 255, 255, 0.10))'; ]]]
+            - border-color: >
+                [[[ return (variables.toggle && states[variables.toggle] && states[variables.toggle].state === 'on') ? variables.toggle_color : 'var(--kit-button-stroke, rgba(255, 255, 255, 0.75))'; ]]]
+          icon:
+            - width: 20px
+            - color: >
+                [[[ return (variables.toggle && states[variables.toggle] && states[variables.toggle].state === 'on') ? '#1c1c1e' : 'var(--kit-text, rgba(255, 255, 255, 0.95))'; ]]]

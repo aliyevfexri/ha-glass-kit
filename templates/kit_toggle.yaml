@@ -1,0 +1,44 @@
+# kit_toggle: one on/off control as a glass row (light, switch, input_boolean, fan...).
+# entity = the entity to toggle. Tap toggles it; the icon and pill light up while it is on.
+# variables:
+#   on_color: colour while on (default var(--kit-accent))
+#   note: optional small text under the name (e.g. "Boost cooling for 2.5 h")
+kit_toggle:
+  template: kit_tile
+  variables:
+    on_color: "var(--kit-accent, #0a84ff)"
+    note: ''
+  tap_action:
+    action: toggle
+  styles:
+    grid:
+      - grid-template-areas: '"i n s" "i l s"'
+      - grid-template-columns: 40px 1fr auto
+      - grid-template-rows: auto auto
+      - column-gap: 10px
+    name:
+      - align-self: end
+    icon:
+      - color: >
+          [[[ return entity && entity.state === 'on' ? variables.on_color : 'var(--kit-off, rgba(255, 255, 255, 0.55))'; ]]]
+    custom_fields:
+      l:
+        - justify-self: start
+        - align-self: start
+      s:
+        - align-self: center
+        - padding: 4px 12px
+        - border-radius: 999px
+        - font-size: var(--kit-size-label, 12px)
+        - font-weight: 600
+        - background: >
+            [[[ return entity && entity.state === 'on' ? variables.on_color : 'var(--kit-surface-strong, rgba(255, 255, 255, 0.10))'; ]]]
+        - color: >
+            [[[ return entity && entity.state === 'on' ? '#fff' : 'var(--kit-text-dim, rgba(255, 255, 255, 0.68))'; ]]]
+  custom_fields:
+    l: '[[[ return variables.note || ""; ]]]'
+    s: >
+      [[[
+        if (!entity || ['unavailable', 'unknown'].includes(entity.state)) return '—';
+        return entity.state === 'on' ? 'On' : 'Off';
+      ]]]

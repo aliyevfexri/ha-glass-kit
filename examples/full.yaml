@@ -114,6 +114,10 @@ views:
               details:
                 - {entity: sensor.fridge_temperature, unit: " °C"}
                 - {entity: sensor.freezer_temperature, unit: " °C", label: freezer}
+              popup: "#fridge"
+              toggle: switch.fridge_power_cool
+              toggle_icon: mdi:snowflake
+              toggle_color: "var(--kit-cool, #64d2ff)"
             grid_options: {columns: 6, rows: auto}
 
       # Pop-ups and footer. Full width (column_span = max_columns) so it sits below everything;
@@ -135,6 +139,27 @@ views:
                 entity: climate.living_room
               - type: thermostat
                 entity: climate.bedroom
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: "#fridge"
+            name: Fridge
+            icon: mdi:fridge-outline
+            bg_color: "#0c2380"
+            bg_opacity: 55
+            bg_blur: 16
+            cards:
+              - type: custom:button-card
+                template: kit_setpoint
+                entity: number.fridge_temperature
+                name: Fridge temperature
+                icon: mdi:fridge-top
+              - type: custom:button-card
+                template: kit_toggle
+                entity: switch.fridge_power_cool
+                name: Power Cool
+                icon: mdi:snowflake
+                variables:
+                  on_color: "var(--kit-cool, #64d2ff)"
           - type: custom:bubble-card
             card_type: horizontal-buttons-stack
             hide_gradient: true

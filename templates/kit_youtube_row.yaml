@@ -1,0 +1,88 @@
+# kit_youtube_row: one YouTube search result as a row (thumbnail, title, channel · length).
+# Tap plays the video's audio on the speaker in variables.player (service yt_audio.play).
+# entity = the results sensor of the yt_audio integration (sensor.youtube_results).
+# Use 8 rows with index 0..7 under a search field; rows without a result hide themselves.
+# variables:
+#   index:  which result (0 = first)                              (required)
+#   player: media_player.* that plays (a Music Assistant player)  (required)
+kit_youtube_row:
+  show_icon: false
+  show_name: false
+  show_state: false
+  variables:
+    index: 0
+    player: ''
+  tap_action:
+    action: >
+      [[[ const r = ((entity && entity.attributes.results) || [])[variables.index];
+          return r && variables.player ? 'perform-action' : 'none'; ]]]
+    perform_action: yt_audio.play
+    data:
+      entity_id: '[[[ return variables.player; ]]]'
+      video_id: >
+        [[[ const r = ((entity && entity.attributes.results) || [])[variables.index]; return r ? r.id : ''; ]]]
+  styles:
+    card:
+      - display: >
+          [[[ return ((entity && entity.attributes.results) || [])[variables.index] ? 'block' : 'none'; ]]]
+      - background: >
+          [[[ const r = ((entity && entity.attributes.results) || [])[variables.index];
+              const np = (entity && entity.attributes.now_playing || {})[variables.player];
+              return r && np && np.id === r.id ? 'var(--kit-accent-soft, rgba(10, 132, 255, 0.28))' : 'var(--kit-surface-strong, rgba(255, 255, 255, 0.10))'; ]]]
+      - border: 1px solid var(--kit-stroke, rgba(255, 255, 255, 0.24))
+      - border-radius: 16px
+      - box-shadow: none
+      - padding: 8px
+      - color: var(--kit-text, rgba(255, 255, 255, 0.95))
+      - font-family: var(--kit-font, -apple-system, BlinkMacSystemFont, 'SF Pro Rounded', 'Segoe UI', Roboto, system-ui, sans-serif)
+    grid:
+      - grid-template-areas: '"p t" "p m"'
+      - grid-template-columns: 96px 1fr
+      - grid-template-rows: 1fr auto
+      - column-gap: 10px
+    custom_fields:
+      p:
+        - width: 96px
+        - height: 54px
+        - border-radius: 10px
+        - overflow: hidden
+        - background: rgba(0, 0, 0, 0.25)
+      t:
+        - justify-self: start
+        - text-align: left
+        - font-size: 14px
+        - font-weight: 600
+        - line-height: 1.25
+        - display: -webkit-box
+        - '-webkit-line-clamp': '2'
+        - '-webkit-box-orient': vertical
+        - overflow: hidden
+      m:
+        - justify-self: start
+        - font-size: 12px
+        - color: var(--kit-text-dim, rgba(255, 255, 255, 0.68))
+        - white-space: nowrap
+        - overflow: hidden
+        - text-overflow: ellipsis
+        - max-width: 100%
+  custom_fields:
+    p: >
+      [[[ const r = ((entity && entity.attributes.results) || [])[variables.index];
+          if (!r) return '';
+          const src = 'https://i.ytimg.com/vi/' + encodeURIComponent(r.id) + '/mqdefault.jpg';
+          return `<img src="${src}" style="width:100%;height:100%;object-fit:cover;display:block" loading="lazy">`; ]]]
+    t: >
+      [[[ const r = ((entity && entity.attributes.results) || [])[variables.index];
+          return r ? r.title.replace(/[&<>]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;'}[c])) : ''; ]]]
+    m: >
+      [[[ const r = ((entity && entity.attributes.results) || [])[variables.index];
+          if (!r) return '';
+          const np = (entity.attributes.now_playing || {})[variables.player];
+          let d = '';
+          if (r.duration) {
+            const h = Math.floor(r.duration / 3600), m = Math.floor(r.duration / 60) % 60, s = r.duration % 60;
+            d = (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0');
+          }
+          const parts = [r.channel, d].filter(x => x);
+          if (np && np.id === r.id) parts.unshift('▶ Playing');
+          return parts.join(' · ').replace(/[&<>]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;'}[c])); ]]]

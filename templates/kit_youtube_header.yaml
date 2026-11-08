@@ -1,0 +1,44 @@
+# kit_youtube_header: status line above the YouTube results ("Searching…", "8 results for …").
+# entity = the results sensor (sensor.youtube_results); its state is the last finished search.
+# variables:
+#   search_entity: the input_text people type into (default input_text.youtube_search)
+kit_youtube_header:
+  show_icon: true
+  show_name: true
+  show_state: false
+  icon: mdi:youtube
+  variables:
+    search_entity: input_text.youtube_search
+  tap_action:
+    action: none
+  name: >
+    [[[
+      const q = states[variables.search_entity] ? states[variables.search_entity].state : '';
+      const done = entity ? entity.state : '';
+      const n = entity && entity.attributes.results ? entity.attributes.results.length : 0;
+      if (!q || ['unknown', 'unavailable'].includes(q)) return 'Type a search, press Enter. Audio only.';
+      if (q.trim() !== done) return 'Searching…';
+      return n ? `${n} results for “${done}”. Tap one to play.` : `Nothing found for “${done}”.`;
+    ]]]
+  triggers_update: all
+  styles:
+    card:
+      - background: none
+      - border: none
+      - box-shadow: none
+      - padding: 4px 6px
+      - color: var(--kit-text, rgba(255, 255, 255, 0.95))
+      - font-family: var(--kit-font, -apple-system, BlinkMacSystemFont, 'SF Pro Rounded', 'Segoe UI', Roboto, system-ui, sans-serif)
+    grid:
+      - grid-template-areas: '"i n"'
+      - grid-template-columns: 28px 1fr
+      - column-gap: 8px
+    icon:
+      - width: 22px
+      - color: '#ff3b30'
+    name:
+      - justify-self: start
+      - text-align: left
+      - font-size: 13px
+      - white-space: normal
+      - color: var(--kit-text-dim, rgba(255, 255, 255, 0.68))

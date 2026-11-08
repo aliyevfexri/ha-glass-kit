@@ -14,6 +14,7 @@ Sizes: `grid_options: {columns: 6, rows: auto}` for a normal tile, `columns: 12`
 - [kit_setpoint](#kit_setpoint)
 - [kit_weather](#kit_weather)
 - [kit_media](#kit_media)
+- [kit_youtube_header / kit_youtube_row](#kit_youtube_header--kit_youtube_row)
 - [kit_stats](#kit_stats)
 - [kit_spacer](#kit_spacer)
 - [kit_tile](#kit_tile)
@@ -275,6 +276,35 @@ template: kit_media
 entity: media_player.living_room_speaker
 name: Speaker
 grid_options: {columns: 12, rows: auto}
+```
+
+## kit_youtube_header / kit_youtube_row
+YouTube search results inside a speaker pop-up: a status line ("Searching…", "8 results for …") and up to 8 result rows (thumbnail, title, channel · length). Tapping a row plays the video's **audio** on the speaker. Needs a backend with this contract (the author's is a small yt-dlp based custom integration called `yt_audio`, not part of the kit): a sensor whose attribute `results` is a list of `{id, title, channel, duration}` (and optional `now_playing: {<player>: {id}}`), and an action `yt_audio.play` with `entity_id` + `video_id`. The player is best a Music Assistant player (seek bar, AirPlay 2 to HomePods). The row for the video that this speaker plays shows "▶ Playing".
+
+**Entity** (**required**, both): the results sensor `sensor.youtube_results`.
+
+| Template | Variable | Default | Meaning |
+|---|---|---|---|
+| `kit_youtube_header` | `search_entity` | `input_text.youtube_search` | the text field people type into |
+| `kit_youtube_row` | `index` (**required**) | `0` | which result, 0..7 |
+| `kit_youtube_row` | `player` (**required**) | — | `media_player.*` that plays (Music Assistant player) |
+
+```yaml
+# inside a bubble-card pop-up, one per speaker
+- type: media-control                 # now playing + seek bar
+  entity: media_player.kitchen_speaker
+- type: entities
+  entities:
+    - entity: input_text.youtube_search
+      name: Search YouTube
+- type: custom:button-card
+  template: kit_youtube_header
+  entity: sensor.youtube_results
+- type: custom:button-card
+  template: kit_youtube_row
+  entity: sensor.youtube_results
+  variables: {index: 0, player: media_player.kitchen_speaker}
+# ... repeat the row with index 1..7
 ```
 
 ## kit_stats

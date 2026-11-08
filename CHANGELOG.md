@@ -5,6 +5,7 @@ All notable changes to this kit. Versions follow [Semantic Versioning](https://s
 ## [Unreleased]
 
 ### Added
+- `kit_youtube_header`, `kit_youtube_row`: YouTube search status line and result rows for a speaker pop-up (tap plays the audio on that speaker; needs the `yt_audio` integration and a Music Assistant player).
 - `kit_toggle`: on/off control as a row (light, switch, input_boolean), for pop-ups.
 - `kit_setpoint`: number setting with − / + as a row (`number.*`, `input_number.*`), for pop-ups.
 - `kit_appliance`: `popup` (tap opens a bubble-card pop-up instead of the history graph), `toggle` / `toggle_icon` / `toggle_color` (round quick button, e.g. oven light), `alert` / `alert_text` (red status pill driven by a helper), progress bar while active.

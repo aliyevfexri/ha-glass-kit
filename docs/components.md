@@ -9,6 +9,7 @@ Sizes: `grid_options: {columns: 6, rows: auto}` for a normal tile, `columns: 12`
 - [kit_heat_room](#kit_heat_room)
 - [kit_sensor_room](#kit_sensor_room)
 - [kit_heat_overview](#kit_heat_overview)
+- [kit_schedule](#kit_schedule)
 - [kit_appliance](#kit_appliance)
 - [kit_toggle](#kit_toggle)
 - [kit_setpoint](#kit_setpoint)
@@ -31,6 +32,7 @@ One heated room with a thermostat. Big number = current temperature. − / + cha
 |---|---|---|---|
 | `humidity` | entity id | `null` | Humidity sensor shown on the label line |
 | `next_step` | entity id | `null` | Sensor whose state is the next schedule step text, shown as "Next: …" |
+| `status` | entity id | `null` | Sensor whose state is a short text ("Manual until 23:00, then 24°"). Replaces "Next: …" on the label line while it is not `unavailable` / `unknown`; with attribute `mode: manual` the text is orange (`--kit-heat`) |
 | `sensor` | entity id | `null` | The temperature sensor behind the thermostat. When it is `unavailable` / `unknown` the badge says **Sensor offline** and the icon turns red. Recommended: a thermostat keeps the last reading and hides a dead sensor |
 
 Badge: Heating / Idle / Off / Sensor offline.
@@ -89,6 +91,27 @@ variables:
 tap_action:
   action: navigate
   navigation_path: "#heating"
+grid_options: {columns: 12, rows: auto}
+```
+
+## kit_schedule
+Weekly heating schedule as a read-only glass tile: one row per day group, periods as pills (`23:00–08:00 · 24°`), the active one highlighted, and the base temperature last. Tap does nothing.
+
+**Entity** (**required**): a sensor with attributes `schedule` (list of `{label, periods: [{from, to, temp, active}]}`) and `base` (number, the temperature at all other times). A missing entity or attribute shows "—".
+
+| Variable | Type | Default | Meaning |
+|---|---|---|---|
+| `status` | entity id | `null` | Sensor whose state is a short text, shown under the title; attribute `mode` is `manual` (orange `--kit-heat`) or `schedule` (dim) |
+| `unit` | text | `°` | Appended to temperatures |
+| `title` | text | `Schedule` | Tile title |
+
+```yaml
+type: custom:button-card
+template: kit_schedule
+entity: sensor.living_room_schedule
+variables:
+  status: sensor.living_room_schedule_status
+  title: Living room schedule
 grid_options: {columns: 12, rows: auto}
 ```
 

@@ -1,0 +1,99 @@
+# kit_schedule: weekly heating schedule as a glass tile. Read-only (tap does nothing).
+# entity = a sensor with attributes:
+#   schedule: list of {label: "Mon–Fri", periods: [{from: "23:00", to: "08:00", temp: 24, active: true|false}, ...]}
+#   base: number, the temperature at all other times
+# variables:
+#   status: optional entity id of a sensor whose state is a short text (e.g. "Manual until 23:00, then 24°");
+#           its attribute `mode` = manual | schedule. Shown under the title; manual colours it var(--kit-heat), else dim
+#   unit: appended to temperatures (default °)
+#   title: tile title (default Schedule)
+# Rows: label (dim) + period pills "23:00–08:00 · 24°"; the pill with active: true is highlighted.
+# Last line: "Other times: <base>". Missing entity or attribute shows "—".
+kit_schedule:
+  template: kit_tile
+  icon: mdi:calendar-clock
+  name: '[[[ return variables.title || "Schedule"; ]]]'
+  variables:
+    status: null
+    unit: °
+    title: Schedule
+  tap_action:
+    action: none
+  styles:
+    card:
+      - cursor: default
+    grid:
+      - grid-template-areas: '"i n" "s s" "r r" "o o"'
+      - grid-template-columns: auto 1fr
+      - grid-template-rows: auto auto auto auto
+      - column-gap: 10px
+      - row-gap: 8px
+    img_cell:
+      - justify-self: start
+    name:
+      - align-self: center
+    icon:
+      - color: var(--kit-text-dim, rgba(255, 255, 255, 0.68))
+    custom_fields:
+      s:
+        - justify-self: stretch
+        - text-align: left
+        - font-size: var(--kit-size-label, 12px)
+        - display: >
+            [[[
+              const st = variables.status && states[variables.status];
+              return st && !['unavailable', 'unknown', ''].includes(st.state) ? 'block' : 'none';
+            ]]]
+        - color: >
+            [[[
+              const st = variables.status && states[variables.status];
+              return st && st.attributes && st.attributes.mode === 'manual' ? 'var(--kit-heat, #ff9f0a)' : 'var(--kit-text-dim, rgba(255, 255, 255, 0.68))';
+            ]]]
+      r:
+        - justify-self: stretch
+        - min-width: 0
+      o:
+        - justify-self: start
+        - font-size: var(--kit-size-label, 12px)
+        - color: var(--kit-text-dim, rgba(255, 255, 255, 0.68))
+  custom_fields:
+    s: >
+      [[[
+        const st = variables.status && states[variables.status];
+        if (!st || ['unavailable', 'unknown', ''].includes(st.state)) return '';
+        const esc = (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const manual = !!(st.attributes && st.attributes.mode === 'manual');
+        const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle;background:${manual ? 'var(--kit-heat, #ff9f0a)' : 'var(--kit-text-dim, rgba(255, 255, 255, 0.68))'}"></span>`;
+        return dot + esc(st.state);
+      ]]]
+    r: >
+      [[[
+        const dash = '<span style="color:var(--kit-text-dim, rgba(255, 255, 255, 0.68))">—</span>';
+        if (!entity || !entity.attributes || !Array.isArray(entity.attributes.schedule)) return dash;
+        const esc = (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const unit = variables.unit === undefined || variables.unit === null ? '°' : variables.unit;
+        const temp = (t) => (t === undefined || t === null || t === '' || isNaN(Number(t))) ? '—' : String(Number(t)) + unit;
+        const time = (t) => (t === undefined || t === null || t === '') ? '—' : String(t);
+        const rows = entity.attributes.schedule.filter((e) => e && typeof e === 'object').map((e) => {
+          const periods = Array.isArray(e.periods) ? e.periods.filter((p) => p && typeof p === 'object') : [];
+          const pills = periods.length ? periods.map((p) => {
+            const on = p.active === true || p.active === 'true';
+            const bg = on ? 'var(--kit-accent, #0a84ff)' : 'var(--kit-surface-strong, rgba(255, 255, 255, 0.10))';
+            const bd = on ? 'var(--kit-accent, #0a84ff)' : 'var(--kit-stroke, rgba(255, 255, 255, 0.24))';
+            const fg = on ? '#fff' : 'var(--kit-text, rgba(255, 255, 255, 0.95))';
+            return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid ${bd};background:${bg};color:${fg};font-size:var(--kit-size-label, 12px);font-weight:${on ? 600 : 500};white-space:nowrap">${esc(time(p.from))}–${esc(time(p.to))} · ${esc(temp(p.temp))}</span>`;
+          }).join('') : dash;
+          const label = e.label === undefined || e.label === null ? '—' : e.label;
+          return `<div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:0 0 64px;width:64px;font-size:var(--kit-size-label, 12px);line-height:22px;color:var(--kit-text-dim, rgba(255, 255, 255, 0.68))">${esc(label)}</div><div style="flex:1 1 0;min-width:0;display:flex;flex-wrap:wrap;gap:4px">${pills}</div></div>`;
+        });
+        if (!rows.length) return dash;
+        return `<div style="display:flex;flex-direction:column;gap:8px">${rows.join('')}</div>`;
+      ]]]
+    o: >
+      [[[
+        if (!entity) return '';
+        const unit = variables.unit === undefined || variables.unit === null ? '°' : variables.unit;
+        const b = entity.attributes ? entity.attributes.base : undefined;
+        const ok = !(b === undefined || b === null || b === '' || isNaN(Number(b)));
+        return `Other times: ${ok ? String(Number(b)) + unit : '—'}`;
+      ]]]

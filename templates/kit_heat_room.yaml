@@ -2,6 +2,8 @@
 # variables:
 #   humidity: optional humidity sensor entity id
 #   next_step: optional sensor whose state is the next schedule step text (e.g. "19 °C at 08:00")
+#   status: optional sensor whose state is a short text (e.g. "Manual until 23:00, then 24°"). When set and not
+#           unavailable/unknown it replaces the "Next: ..." part of the label line; attribute mode: manual colours it var(--kit-heat)
 #   sensor: optional temperature sensor behind the thermostat; when it is unavailable the tile says "Sensor offline"
 #           (a thermostat keeps showing the last reading, which hides a dead sensor)
 # Shows current temperature, target with -/+ (step = target_temp_step or 0.5, clamped to min/max),
@@ -12,6 +14,7 @@ kit_heat_room:
   variables:
     humidity: null
     next_step: null
+    status: null
     sensor: null
   styles:
     grid:
@@ -45,8 +48,13 @@ kit_heat_room:
     l: >
       [[[
         const parts = [];
+        const esc = (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         if (variables.humidity && states[variables.humidity] && !isNaN(parseFloat(states[variables.humidity].state))) parts.push(`${states[variables.humidity].state}% humidity`);
-        if (variables.next_step && states[variables.next_step] && !['unavailable','unknown'].includes(states[variables.next_step].state)) parts.push(`Next: ${states[variables.next_step].state}`);
+        const st = variables.status && states[variables.status];
+        if (st && !['unavailable', 'unknown', ''].includes(st.state)) {
+          const manual = st.attributes && st.attributes.mode === 'manual';
+          parts.push(manual ? `<span style="color:var(--kit-heat, #ff9f0a)">${esc(st.state)}</span>` : esc(st.state));
+        } else if (variables.next_step && states[variables.next_step] && !['unavailable','unknown'].includes(states[variables.next_step].state)) parts.push(`Next: ${states[variables.next_step].state}`);
         return parts.join(' · ');
       ]]]
     c:

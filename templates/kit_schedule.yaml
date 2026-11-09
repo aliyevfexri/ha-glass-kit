@@ -37,6 +37,7 @@ kit_schedule:
     custom_fields:
       s:
         - justify-self: stretch
+        - text-align: left
         - font-size: var(--kit-size-label, 12px)
         - display: >
             [[[

@@ -95,15 +95,16 @@ grid_options: {columns: 12, rows: auto}
 ```
 
 ## kit_schedule
-Weekly heating schedule as a read-only glass tile: one row per day group, periods as pills (`23:00–08:00 · 24°`), the active one highlighted, and the base temperature last. Tap does nothing.
+Weekly heating schedule as a glass tile: one row per day group, periods as pills (`23:00–08:00 · 24°`), the active one highlighted, and the base temperature last. Tap does nothing. With `edit` set, a pencil (top right) switches it to an editor: per group, rows `from – to  − 24° +  delete` with native time pickers, "+ Add time range", and − / + for "Other times". Changes save by themselves (temperature after 0.9 s, times after 1.5 s, add / delete at once); overlapping or zero-length ranges are not saved and the group shows a red note. An end before the start is overnight; an end of 00:00 is saved as 24:00.
 
-**Entity** (**required**): a sensor with attributes `schedule` (list of `{label, periods: [{from, to, temp, active}]}`) and `base` (number, the temperature at all other times). A missing entity or attribute shows "—".
+**Entity** (**required**): a sensor with attributes `schedule` (list of `{label, key, periods: [{from, to, temp, active}]}`; `key` only needed for editing) and `base` (number, the temperature at all other times). A missing entity or attribute shows "—".
 
 | Variable | Type | Default | Meaning |
 |---|---|---|---|
 | `status` | entity id | `null` | Sensor whose state is a short text, shown under the title; attribute `mode` is `manual` (orange `--kit-heat`) or `schedule` (dim) |
 | `unit` | text | `°` | Appended to temperatures |
 | `title` | text | `Schedule` | Tile title |
+| `edit` | map | `null` | Makes it editable: `action` (`domain.service`, called with `{...data, group: <key>, ranges: "HH:MM-HH:MM=24,..."}`, `"-"` = no ranges), `data` (extra fields), `base` (`number.*` / `input_number.*` for "Other times", optional), `min` 15, `max` 28, `step` 0.5, `max_ranges` 12 |
 
 ```yaml
 type: custom:button-card
@@ -112,6 +113,10 @@ entity: sensor.living_room_schedule
 variables:
   status: sensor.living_room_schedule_status
   title: Living room schedule
+  edit:                         # optional: pencil → editor
+    action: script.heating_schedule_set
+    data: {room: living_room}
+    base: input_number.heating_living_room_base
 grid_options: {columns: 12, rows: auto}
 ```
 

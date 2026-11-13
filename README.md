@@ -19,7 +19,7 @@ Status: **0.1.0**, running daily in one home on Home Assistant 2026.11. Issues a
 | [`kit_heat_room`](docs/components.md#kit_heat_room) | `climate.*` | Room temperature, humidity, target with − / +, heating / idle, "Sensor offline" |
 | [`kit_sensor_room`](docs/components.md#kit_sensor_room) | temperature `sensor.*` | Sensor-only room: temperature, humidity, battery |
 | [`kit_heat_overview`](docs/components.md#kit_heat_overview) | (list of `climate.*`) | All heated rooms at a glance + boiler relay |
-| [`kit_schedule`](docs/components.md#kit_schedule) | schedule `sensor.*` | Weekly heating schedule: period pills, active one highlighted, base temperature, manual / schedule status |
+| [`kit_schedule`](docs/components.md#kit_schedule) | schedule `sensor.*` | Weekly heating schedule: period pills, active one highlighted, base temperature, manual / schedule status; optional editor (pencil) |
 | [`kit_appliance`](docs/components.md#kit_appliance) | any | Washer, oven, fridge, door: state, status pill, details, progress bar, ready time, quick button, opens a pop-up |
 | [`kit_toggle`](docs/components.md#kit_toggle) | light / switch / input_boolean | One on/off control as a row, or a square tile with `square: true` (pop-ups) |
 | [`kit_setpoint`](docs/components.md#kit_setpoint) | `number.*` / `input_number.*` | A number setting with − / + as a row (fridge temperature) |

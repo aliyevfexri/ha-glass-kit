@@ -5,6 +5,7 @@ All notable changes to this kit. Versions follow [Semantic Versioning](https://s
 ## [Unreleased]
 
 ### Added
+- `kit_schedule`: `edit` variable, a pencil that turns the tile into a schedule editor (time pickers, − / + per range, add / delete, other times; autosave through a configurable action; overlap check).
 - `kit_schedule`: weekly heating schedule tile (period pills, active highlighted, base temperature, optional manual / schedule status line).
 - `kit_heat_room`: `status` variable, a status text sensor shown on the label line instead of "Next: …" (orange when its `mode` is `manual`).
 - `kit_youtube_header`, `kit_youtube_row`: YouTube search status line and result rows for a speaker pop-up (tap plays the audio on that speaker; needs the `yt_audio` integration and a Music Assistant player).

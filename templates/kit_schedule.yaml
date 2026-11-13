@@ -70,10 +70,13 @@ kit_schedule:
       p:
         - justify-self: end
         - align-self: center
+        - pointer-events: auto          # button-card turns pointer events off inside the card
         - display: '[[[ return variables.edit ? "block" : "none"; ]]]'
       e:
         - justify-self: stretch
         - min-width: 0
+        - pointer-events: auto
+        - text-align: left
         - white-space: normal
         - overflow: visible
         - display: '[[[ return variables.edit ? "block" : "none"; ]]]'
@@ -241,6 +244,7 @@ kit_schedule:
           .kse-h { font-size: var(--kit-size-label, 12px); color: var(--kit-text-dim, rgba(255, 255, 255, 0.68)); }
           .kse-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
           .kse-time { font: inherit; font-size: 15px; color: var(--kit-text, rgba(255, 255, 255, 0.95)); background: var(--kit-surface-strong, rgba(255, 255, 255, 0.10)); border: 1px solid var(--kit-stroke, rgba(255, 255, 255, 0.24)); border-radius: 10px; padding: 5px 6px; color-scheme: dark; min-width: 84px; width: auto; box-sizing: border-box; }
+          .kse-pen ha-icon, .kse-b ha-icon { width: 18px; height: 18px; max-width: 18px; display: flex; }
           .kse-dash { color: var(--kit-text-dim, rgba(255, 255, 255, 0.68)); }
           .kse-s { display: flex; align-items: center; gap: 4px; margin-left: auto; }
           .kse-b { cursor: pointer; width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--kit-button-stroke, rgba(255, 255, 255, 0.75)); background: var(--kit-surface-strong, rgba(255, 255, 255, 0.10)); color: var(--kit-text, rgba(255, 255, 255, 0.95)); font-size: 18px; line-height: 1; padding: 0; display: flex; align-items: center; justify-content: center; --mdc-icon-size: 18px; }

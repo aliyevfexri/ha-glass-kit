@@ -1,12 +1,22 @@
-# kit_schedule: weekly heating schedule as a glass tile. Read-only (tap does nothing).
+# kit_schedule: weekly heating schedule as a glass tile. Read-only unless `edit` is set (tap does nothing).
 # entity = a sensor with attributes:
-#   schedule: list of {label: "Mon–Fri", periods: [{from: "23:00", to: "08:00", temp: 24, active: true|false}, ...]}
+#   schedule: list of {label: "Mon–Fri", key: "weekday", periods: [{from: "23:00", to: "08:00", temp: 24, active: true|false}, ...]}
+#             (key is only needed for editing)
 #   base: number, the temperature at all other times
 # variables:
 #   status: optional entity id of a sensor whose state is a short text (e.g. "Manual until 23:00, then 24°");
 #           its attribute `mode` = manual | schedule. Shown under the title; manual colours it var(--kit-heat), else dim
 #   unit: appended to temperatures (default °)
 #   title: tile title (default Schedule)
+#   edit: optional; makes the schedule editable. A pencil (top right) switches the tile to edit mode:
+#         per day group, rows "from – to  − 24° +  delete" and "Add time range"; "Other times" gets − / +.
+#         {action: domain.service called with {...data, group: <key>, ranges: "HH:MM-HH:MM=24,..." ("-" = none)},
+#          data: {extra fields, e.g. room: kitchen},
+#          base: number/input_number entity for "Other times" (optional),
+#          min: 15, max: 28, step: 0.5, max_ranges: 12}
+#         End before start = overnight (23:00–08:00). An end of 00:00 is saved as 24:00 (end of day).
+#         Overlapping or zero-length ranges are not saved; the group shows a red note until fixed.
+#         Temperature taps are saved after a short pause, time changes after 1.5 s, add/delete at once.
 # Rows: label (dim) + period pills "23:00–08:00 · 24°"; the pill with active: true is highlighted.
 # Last line: "Other times: <base>". Missing entity or attribute shows "—".
 kit_schedule:
@@ -17,15 +27,16 @@ kit_schedule:
     status: null
     unit: °
     title: Schedule
+    edit: null
   tap_action:
     action: none
   styles:
     card:
       - cursor: default
     grid:
-      - grid-template-areas: '"i n" "s s" "r r" "o o"'
-      - grid-template-columns: auto 1fr
-      - grid-template-rows: auto auto auto auto
+      - grid-template-areas: '[[[ return variables.edit ? `"i n p" "s s s" "r r r" "o o o" "e e e"` : `"i n" "s s" "r r" "o o"`; ]]]'
+      - grid-template-columns: '[[[ return variables.edit ? "auto 1fr auto" : "auto 1fr"; ]]]'
+      - grid-template-rows: '[[[ return variables.edit ? "auto auto auto auto auto" : "auto auto auto auto"; ]]]'
       - column-gap: 10px
       - row-gap: 8px
     img_cell:
@@ -56,6 +67,19 @@ kit_schedule:
         - justify-self: start
         - font-size: var(--kit-size-label, 12px)
         - color: var(--kit-text-dim, rgba(255, 255, 255, 0.68))
+      p:
+        - justify-self: end
+        - align-self: center
+        - pointer-events: auto          # button-card turns pointer events off inside the card
+        - display: '[[[ return variables.edit ? "block" : "none"; ]]]'
+      e:
+        - justify-self: stretch
+        - min-width: 0
+        - pointer-events: auto
+        - text-align: left
+        - white-space: normal
+        - overflow: visible
+        - display: '[[[ return variables.edit ? "block" : "none"; ]]]'
   custom_fields:
     s: >
       [[[
@@ -96,4 +120,167 @@ kit_schedule:
         const b = entity.attributes ? entity.attributes.base : undefined;
         const ok = !(b === undefined || b === null || b === '' || isNaN(Number(b)));
         return `Other times: ${ok ? String(Number(b)) + unit : '—'}`;
+      ]]]
+    p: >
+      [[[
+        if (!variables.edit) return '';
+        const toggle = (ev) => { ev.stopPropagation(); this.toggleAttribute('kit-edit'); };
+        return html`<div class="kse-pen" role="button" tabindex="0" @click=${toggle}>
+          <span class="kse-v"><ha-icon icon="mdi:pencil"></ha-icon></span><span class="kse-d">Done</span></div>`;
+      ]]]
+    e: >
+      [[[
+        const ed = variables.edit;
+        if (!ed || !entity || !entity.attributes || !Array.isArray(entity.attributes.schedule)) return '';
+        const num = (v, d) => (v === undefined || v === null || v === '' || isNaN(Number(v))) ? d : Number(v);
+        const unit = variables.unit === undefined || variables.unit === null ? '°' : variables.unit;
+        const tmin = num(ed.min, 15), tmax = num(ed.max, 28), step = num(ed.step, 0.5), maxRanges = num(ed.max_ranges, 12);
+        const groups = entity.attributes.schedule.filter((g) => g && typeof g === 'object' && g.key);
+        const st = this._kitSched || (this._kitSched = { draft: {}, timers: {}, base: null });
+        const toMin = (t) => { const a = String(t).split(':'); return Number(a[0]) * 60 + Number(a[1]); };
+        const pad = (n) => String(n).padStart(2, '0');
+        const ser = (l) => l.length ? l.map((r) => `${r.from}-${r.to}=${Number(r.temp)}`).join(',') : '-';
+        const sortL = (l) => l.slice().sort((a, b) => toMin(a.from) - toMin(b.from));
+        const fromEntity = (key) => {
+          const g = groups.find((x) => x.key === key);
+          return (g && Array.isArray(g.periods) ? g.periods : []).filter((p) => p && p.from && p.to)
+            .map((p) => ({ from: String(p.from), to: String(p.to), temp: num(p.temp, tmin) }));
+        };
+        // A local draft wins until Home Assistant shows the same ranges (or 15 s after it was sent).
+        groups.forEach((g) => {
+          const d = st.draft[g.key];
+          if (d && (ser(d.list) === ser(fromEntity(g.key)) || (d.sent && Date.now() - d.sent > 15000))) delete st.draft[g.key];
+        });
+        const list = (key) => (st.draft[key] ? st.draft[key].list : fromEntity(key)).map((r) => Object.assign({}, r));
+        const check = (l) => {
+          const iv = [];
+          for (const r of l) {
+            const f = toMin(r.from), t = toMin(r.to);
+            if (f === t) return 'Start and end are the same';
+            if (f < t) iv.push([f, t]); else { iv.push([f, 1440]); if (t > 0) iv.push([0, t]); }
+          }
+          for (let i = 0; i < iv.length; i++) for (let j = i + 1; j < iv.length; j++) {
+            if (iv[i][0] < iv[j][1] && iv[j][0] < iv[i][1]) return 'Two time ranges overlap';
+          }
+          return '';
+        };
+        const root = this.shadowRoot;
+        const showErr = (key, msg) => { const el = root && root.querySelector(`#kse-err-${key}`); if (el) el.textContent = msg ? `${msg}, not saved yet` : ''; };
+        const svc = String(ed.action || '').split('.');
+        const send = (key) => {
+          const d = st.draft[key];
+          if (!d) return;
+          const err = check(d.list);
+          showErr(key, err);
+          if (err || svc.length !== 2) return;
+          d.sent = Date.now();
+          (this._hass || hass).callService(svc[0], svc[1], Object.assign({}, ed.data || {}, { group: key, ranges: ser(d.list) }));
+        };
+        const put = (key, l, delay) => {
+          st.draft[key] = { list: sortL(l), sent: 0 };
+          clearTimeout(st.timers[key]);
+          showErr(key, check(st.draft[key].list));
+          if (delay) st.timers[key] = setTimeout(() => send(key), delay); else send(key);
+        };
+        const stop = (ev) => { ev.stopPropagation(); };
+        const setTime = (ev, key, i, field) => {
+          ev.stopPropagation();
+          let v = ev.target.value;
+          if (!/^\d\d:\d\d$/.test(v || '')) return;
+          if (field === 'to' && v === '00:00') v = '24:00';
+          const l = list(key);
+          if (!l[i]) return;
+          l[i][field] = v;
+          put(key, l, 1500);
+        };
+        const fmt = (t) => String(Math.round(t * 10) / 10) + unit;
+        const bump = (ev, key, i, dir) => {
+          ev.stopPropagation();
+          const l = list(key);
+          if (!l[i]) return;
+          l[i].temp = Math.round(Math.min(tmax, Math.max(tmin, l[i].temp + dir * step)) * 10) / 10;
+          const row = ev.currentTarget.closest('.kse-row');
+          const out = row && row.querySelector('.kse-t');
+          if (out) out.textContent = fmt(l[i].temp);
+          st.draft[key] = { list: l, sent: 0 };
+          clearTimeout(st.timers[key]);
+          st.timers[key] = setTimeout(() => send(key), 900);
+        };
+        const del = (ev, key, i) => { ev.stopPropagation(); const l = list(key); l.splice(i, 1); put(key, l, 0); };
+        const add = (ev, key) => {
+          ev.stopPropagation();
+          const l = list(key);
+          const temp = l.length ? l[l.length - 1].temp : Math.min(tmax, Math.max(tmin, 22));
+          for (const h of [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2, 3, 4, 5]) {
+            const c = { from: `${pad(h)}:00`, to: h === 23 ? '24:00' : `${pad(h + 1)}:00`, temp };
+            if (!check(l.concat([c]))) { put(key, l.concat([c]), 0); return; }
+          }
+          showErr(key, 'No free hour left');
+        };
+        const baseEnt = ed.base && states[ed.base];
+        const baseVal = st.base && Date.now() - st.base.at < 5000 ? st.base.v : (baseEnt ? num(baseEnt.state, null) : num(entity.attributes.base, null));
+        const bumpBase = (ev, dir) => {
+          ev.stopPropagation();
+          if (!baseEnt) return;
+          const cur = st.base && Date.now() - st.base.at < 5000 ? st.base.v : num(baseEnt.state, tmin);
+          const v = Math.round(Math.min(tmax, Math.max(tmin, cur + dir * step)) * 10) / 10;
+          st.base = { v, at: Date.now() };
+          const out = ev.currentTarget.closest('.kse-row').querySelector('.kse-t');
+          if (out) out.textContent = fmt(v);
+          clearTimeout(st.timers.__base);
+          st.timers.__base = setTimeout(() => {
+            st.base.at = Date.now();
+            (this._hass || hass).callService(ed.base.split('.')[0], 'set_value', { entity_id: ed.base, value: v });
+          }, 900);
+        };
+        const tin = (t) => (t === '24:00' ? '00:00' : t);
+        const css = html`<style>
+          :host([kit-edit]) #r, :host([kit-edit]) #o { display: none !important; }
+          :host(:not([kit-edit])) #e { display: none !important; }
+          :host([kit-edit]) .kse-v, :host(:not([kit-edit])) .kse-d { display: none; }
+          .kse-pen { cursor: pointer; display: flex; align-items: center; justify-content: center; min-width: 36px; height: 32px; padding: 0 10px; box-sizing: border-box; border-radius: 999px; border: 1px solid var(--kit-stroke, rgba(255, 255, 255, 0.24)); background: var(--kit-surface-strong, rgba(255, 255, 255, 0.10)); color: var(--kit-text, rgba(255, 255, 255, 0.95)); font-size: var(--kit-size-label, 12px); font-weight: 600; --mdc-icon-size: 18px; }
+          .kse { display: flex; flex-direction: column; gap: 14px; cursor: default; }
+          .kse-g { display: flex; flex-direction: column; gap: 6px; }
+          .kse-h { font-size: var(--kit-size-label, 12px); color: var(--kit-text-dim, rgba(255, 255, 255, 0.68)); }
+          .kse-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+          .kse-time { font: inherit; font-size: 15px; color: var(--kit-text, rgba(255, 255, 255, 0.95)); background: var(--kit-surface-strong, rgba(255, 255, 255, 0.10)); border: 1px solid var(--kit-stroke, rgba(255, 255, 255, 0.24)); border-radius: 10px; padding: 5px 6px; color-scheme: dark; min-width: 84px; width: auto; box-sizing: border-box; }
+          .kse-pen ha-icon, .kse-b ha-icon { width: 18px; height: 18px; max-width: 18px; display: flex; }
+          .kse-dash { color: var(--kit-text-dim, rgba(255, 255, 255, 0.68)); }
+          .kse-s { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+          .kse-b { cursor: pointer; width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--kit-button-stroke, rgba(255, 255, 255, 0.75)); background: var(--kit-surface-strong, rgba(255, 255, 255, 0.10)); color: var(--kit-text, rgba(255, 255, 255, 0.95)); font-size: 18px; line-height: 1; padding: 0; display: flex; align-items: center; justify-content: center; --mdc-icon-size: 18px; }
+          .kse-x { border-color: var(--kit-stroke, rgba(255, 255, 255, 0.24)); color: var(--kit-text-dim, rgba(255, 255, 255, 0.68)); }
+          .kse-t { min-width: 44px; text-align: center; font-size: 16px; font-weight: 600; color: var(--kit-heat, #ff9f0a); }
+          .kse-add { cursor: pointer; align-self: flex-start; font: inherit; font-size: var(--kit-size-label, 12px); font-weight: 600; color: var(--kit-text, rgba(255, 255, 255, 0.95)); background: none; border: 1px dashed var(--kit-stroke, rgba(255, 255, 255, 0.24)); border-radius: 999px; padding: 6px 12px; }
+          .kse-err { font-size: var(--kit-size-label, 12px); color: var(--kit-alert, #ff453a); }
+          .kse-err:empty { display: none; }
+          .kse-note { font-size: var(--kit-size-label, 12px); color: var(--kit-text-dim, rgba(255, 255, 255, 0.68)); }
+        </style>`;
+        const rows = groups.map((g) => {
+          const l = list(g.key);
+          return html`<div class="kse-g">
+            <div class="kse-h">${g.label || g.key}</div>
+            ${l.map((r, i) => html`<div class="kse-row">
+              <input class="kse-time" type="time" .value=${tin(r.from)} @click=${stop} @change=${(ev) => setTime(ev, g.key, i, 'from')}>
+              <span class="kse-dash">–</span>
+              <input class="kse-time" type="time" .value=${tin(r.to)} @click=${stop} @change=${(ev) => setTime(ev, g.key, i, 'to')}>
+              <div class="kse-s">
+                <button class="kse-b" title="Colder" @click=${(ev) => bump(ev, g.key, i, -1)}>−</button>
+                <span class="kse-t">${fmt(r.temp)}</span>
+                <button class="kse-b" title="Warmer" @click=${(ev) => bump(ev, g.key, i, 1)}>+</button>
+                <button class="kse-b kse-x" title="Delete" @click=${(ev) => del(ev, g.key, i)}><ha-icon icon="mdi:delete-outline"></ha-icon></button>
+              </div>
+            </div>`)}
+            <div class="kse-err" id="kse-err-${g.key}">${l.length && check(l) ? `${check(l)}, not saved yet` : ''}</div>
+            ${l.length < maxRanges ? html`<button class="kse-add" @click=${(ev) => add(ev, g.key)}>+ Add time range</button>` : ''}
+          </div>`;
+        });
+        const base = baseEnt ? html`<div class="kse-g"><div class="kse-row">
+            <span class="kse-h">Other times</span>
+            <div class="kse-s">
+              <button class="kse-b" title="Colder" @click=${(ev) => bumpBase(ev, -1)}>−</button>
+              <span class="kse-t">${baseVal === null ? '—' : fmt(baseVal)}</span>
+              <button class="kse-b" title="Warmer" @click=${(ev) => bumpBase(ev, 1)}>+</button>
+            </div></div></div>` : '';
+        return html`${css}<div class="kse">${rows}${base}
+          <div class="kse-note">An end before the start runs overnight. Changes save by themselves.</div></div>`;
       ]]]

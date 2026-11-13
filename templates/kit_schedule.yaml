@@ -125,7 +125,10 @@ kit_schedule:
       [[[
         if (!variables.edit) return '';
         const toggle = (ev) => { ev.stopPropagation(); this.toggleAttribute('kit-edit'); };
-        return html`<div class="kse-pen" role="button" tabindex="0" @click=${toggle}>
+        // button-card's tap handler calls preventDefault on touchend, which kills the click on iPhone/iPad:
+        // keep touch events away from it.
+        const own = (ev) => ev.stopPropagation();
+        return html`<div class="kse-pen" role="button" tabindex="0" @touchstart=${own} @touchend=${own} @click=${toggle}>
           <span class="kse-v"><ha-icon icon="mdi:pencil"></ha-icon></span><span class="kse-d">Done</span></div>`;
       ]]]
     e: >
@@ -281,6 +284,7 @@ kit_schedule:
               <span class="kse-t">${baseVal === null ? '—' : fmt(baseVal)}</span>
               <button class="kse-b" title="Warmer" @click=${(ev) => bumpBase(ev, 1)}>+</button>
             </div></div></div>` : '';
-        return html`${css}<div class="kse">${rows}${base}
+        // Touch events stay inside the editor (button-card's touchend preventDefault would block clicks and pickers).
+        return html`${css}<div class="kse" @touchstart=${stop} @touchend=${stop}>${rows}${base}
           <div class="kse-note">An end before the start runs overnight. Changes save by themselves.</div></div>`;
       ]]]

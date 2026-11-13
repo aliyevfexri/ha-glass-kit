@@ -4,6 +4,9 @@ All notable changes to this kit. Versions follow [Semantic Versioning](https://s
 
 ## [Unreleased]
 
+### Fixed
+- `kit_schedule` editor: taps on touch screens (iPhone/iPad) did nothing because button-card cancels `touchend`; the editor now keeps touch events to itself.
+
 ### Added
 - `kit_schedule`: `edit` variable, a pencil that turns the tile into a schedule editor (time pickers, − / + per range, add / delete, other times; autosave through a configurable action; overlap check).
 - `kit_schedule`: weekly heating schedule tile (period pills, active highlighted, base temperature, optional manual / schedule status line).

@@ -1,0 +1,55 @@
+# kit_refresh: "Refresh now" row. Tap runs a script; the icon spins while the script runs and the
+# second line says "Updating…" or when the data was last updated.
+# entity = the script to run (state `on` = running).
+# variables:
+#   last: entity id of an input_datetime (date + time) holding the last successful update
+#   title: button text (default "Refresh now")
+kit_refresh:
+  template: kit_tile
+  show_icon: true
+  show_name: true
+  variables:
+    last: ''
+    title: Refresh now
+    icon_color: "var(--kit-accent, #0a84ff)"
+  icon: mdi:refresh
+  tap_action:
+    action: call-service
+    service: script.turn_on
+    service_data:
+      entity_id: '[[[ return entity.entity_id; ]]]'
+  name: '[[[ return variables.title; ]]]'
+  styles:
+    card:
+      - height: 64px
+      - padding: 10px 16px
+    grid:
+      - grid-template-areas: '"i n" "i l"'
+      - grid-template-columns: 40px 1fr
+      - grid-template-rows: auto auto
+      - align-content: center
+      - column-gap: 12px
+      - row-gap: 0
+    icon:
+      - color: '[[[ return variables.icon_color; ]]]'
+    name:
+      - align-self: end
+      - font-size: 16px
+    custom_fields:
+      l:
+        - align-self: start
+  state:
+    - value: 'on'
+      spin: true
+  custom_fields:
+    l: >
+      [[[
+        if (entity && entity.state === 'on') return 'Updating…';
+        const st = variables.last && states[variables.last];
+        if (!st || ['unavailable', 'unknown', ''].includes(st.state)) return 'Not updated yet';
+        const d = new Date(st.state.replace(' ', 'T'));
+        if (isNaN(d)) return 'Updated ' + st.state;
+        const hm = d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+        const today = new Date().toDateString() === d.toDateString();
+        return 'Updated ' + (today ? hm : d.toLocaleDateString([], {day: 'numeric', month: 'short'}) + ' ' + hm);
+      ]]]

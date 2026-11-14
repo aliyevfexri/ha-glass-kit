@@ -25,6 +25,7 @@ Status: **0.1.0**, running daily in one home on Home Assistant 2026.11. Issues a
 | [`kit_setpoint`](docs/components.md#kit_setpoint) | `number.*` / `input_number.*` | A number setting with − / + as a row (fridge temperature) |
 | [`kit_banner`](docs/components.md#kit_banner) | (list of sensors) | Coloured pop-up header with big numbers (fridge / freezer, oven now / target) |
 | [`kit_value`](docs/components.md#kit_value) | any | Square tile: icon, name, big value (washer temp / spin, door) |
+| [`kit_refresh`](docs/components.md#kit_refresh) | `script.*` | "Refresh now" row: spins while the script runs, shows the last update time |
 | [`kit_weather`](docs/components.md#kit_weather) | `weather.*` | Condition icon, temperature, humidity, wind |
 | [`kit_media`](docs/components.md#kit_media) | `media_player.*` | Now playing, volume − / +, play/pause |
 | [`kit_youtube_header` / `kit_youtube_row`](docs/components.md#kit_youtube_header--kit_youtube_row) | `sensor.youtube_results` | YouTube search status + result rows in a speaker pop-up; tap plays the audio (needs the `yt_audio` integration + Music Assistant) |

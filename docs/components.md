@@ -251,6 +251,25 @@ variables:
     - {label: Freezer, entity: sensor.freezer_temperature, unit: "°C"}
 ```
 
+## kit_refresh
+"Refresh now" row: round arrows icon, title and a status line. Tap runs a script; while the script runs the icon spins and the line says "Updating…", afterwards "Updated 14:05" (or the date when older than today).
+
+**Entity** (**required**): the `script.*` to run (its state is `on` while running).
+
+| Variable | Type | Default | Meaning |
+|---|---|---|---|
+| `last` | entity id | `''` | `input_datetime` (date + time) holding the last successful update; shown on the status line |
+| `title` | text | `Refresh now` | Button text |
+| `icon_color` | CSS colour | `var(--kit-accent)` | Icon colour |
+
+```yaml
+type: custom:button-card
+template: kit_refresh
+entity: script.utilities_refresh
+variables:
+  last: input_datetime.utilities_last_check
+```
+
 ## kit_value
 Square info tile: centred icon, small name, big value. For settings and states shown two per row in a pop-up (washer temperature and spin, oven mode, door). 112 px high, same as a square `kit_toggle`. Tap opens more-info (a `select` can be changed there).
 

@@ -29,6 +29,7 @@ Status: **0.1.0**, running daily in one home on Home Assistant 2026.11. Issues a
 | [`kit_weather`](docs/components.md#kit_weather) | `weather.*` | Condition icon, temperature, humidity, wind |
 | [`kit_media`](docs/components.md#kit_media) | `media_player.*` | Now playing, volume − / +, play/pause |
 | [`kit_youtube_header` / `kit_youtube_row`](docs/components.md#kit_youtube_header--kit_youtube_row) | `sensor.youtube_results` | YouTube search status + result rows in a speaker pop-up; tap plays the audio (needs the `yt_audio` integration + Music Assistant) |
+| [`kit_reminder_row`](docs/components.md#kit_reminder_row) | list `sensor.*` | One spoken reminder (text, next time · repeat · speaker); tap deletes after a confirm |
 | [`kit_stats`](docs/components.md#kit_stats) | (list of sensors) | 2–3 numbers side by side (power, energy, speed) |
 | [`kit_spacer`](docs/components.md#kit_spacer) | none | Invisible space above a fixed footer bar |
 | [`kit_tile`](docs/components.md#kit_tile) | any | Base tile every component extends |

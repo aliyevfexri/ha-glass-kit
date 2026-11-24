@@ -22,6 +22,7 @@ Status: **0.1.0**, running daily in one home on Home Assistant 2026.11. Issues a
 | [`kit_schedule`](docs/components.md#kit_schedule) | schedule `sensor.*` | Weekly heating schedule: period pills, active one highlighted, base temperature, manual / schedule status; optional editor (pencil) |
 | [`kit_appliance`](docs/components.md#kit_appliance) | any | Washer, oven, fridge, door: state, status pill, details, progress bar, ready time, quick button, opens a pop-up |
 | [`kit_toggle`](docs/components.md#kit_toggle) | light / switch / input_boolean | One on/off control as a row, or a square tile with `square: true` (pop-ups) |
+| [`kit_expander`](docs/components.md#kit_expander) | input_boolean (open state) | Header row of a collapsible group with a count and a chevron; the group's cards use per-card visibility |
 | [`kit_setpoint`](docs/components.md#kit_setpoint) | `number.*` / `input_number.*` | A number setting with − / + as a row (fridge temperature) |
 | [`kit_banner`](docs/components.md#kit_banner) | (list of sensors) | Coloured pop-up header with big numbers (fridge / freezer, oven now / target) |
 | [`kit_value`](docs/components.md#kit_value) | any | Square tile: icon, name, big value (washer temp / spin, door) |

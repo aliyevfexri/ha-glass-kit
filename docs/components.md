@@ -390,6 +390,28 @@ YouTube search results inside a speaker pop-up: a status line ("Searching…", "
 # ... repeat the row with index 1..7
 ```
 
+## kit_reminder_row
+One spoken reminder as a row inside a pop-up: bell icon, the text, and a line with the next time, repeat and speaker ("Tomorrow 09:00 · Weekly · Living room HomePod"), trash icon on the right. Tapping the row asks "Delete the reminder …?" and on OK runs `delete_action` with `{id}`. Row 0 says `empty_text` when there are no reminders; other empty rows hide themselves. Times are shown in Home Assistant's time zone.
+
+Needs a backend with this contract (the author's is a template package, not part of the kit): a sensor whose attribute `items` is a list of `{id, text, next, repeat, speaker}`, soonest first (`next` = ISO date-time, `repeat` = `once`/`daily`/`weekly`/`monthly`/`yearly`), and an action that deletes one by `id`.
+
+**Entity** (**required**): the list sensor, e.g. `sensor.next_reminder`.
+
+| Variable | Type | Default | Meaning |
+|---|---|---|---|
+| `index` (**required**) | number | `0` | which reminder, 0 = soonest |
+| `delete_action` | action | `script.reminder_delete` | run on a confirmed tap with data `{id}` |
+| `empty_text` | text | `No reminders yet.` | row 0 text when the list is empty |
+
+```yaml
+# inside a bubble-card pop-up, under the form that adds reminders
+- type: custom:button-card
+  template: kit_reminder_row
+  entity: sensor.next_reminder
+  variables: {index: 0}
+# ... repeat with index 1..9
+```
+
 ## kit_stats
 Two or three numbers side by side with small captions. Non-numeric values show "—".
 

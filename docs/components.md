@@ -12,6 +12,7 @@ Sizes: `grid_options: {columns: 6, rows: auto}` for a normal tile, `columns: 12`
 - [kit_schedule](#kit_schedule)
 - [kit_appliance](#kit_appliance)
 - [kit_toggle](#kit_toggle)
+- [kit_expander](#kit_expander)
 - [kit_setpoint](#kit_setpoint)
 - [kit_weather](#kit_weather)
 - [kit_media](#kit_media)
@@ -212,6 +213,41 @@ icon: mdi:snowflake
 variables:
   on_color: "var(--kit-cool, #64d2ff)"
   note: Fast cooling of the fridge
+```
+
+## kit_expander
+Header row of a collapsible group: icon, name, a count line ("2 of 3 on") and a chevron. Tap opens or closes the group. Use it to keep long lists of switches (notification settings, per-room options) short.
+
+**Entity** (**required**): an `input_boolean` that holds the open state (on = open). One helper per group; make one per person if each person should keep their own open/closed state.
+
+The cards of the group stay ordinary cards with HA's per-card `visibility` on that helper, so they show only while it is on:
+
+| Variable | Type | Default | Meaning |
+|---|---|---|---|
+| `items` | list of entity ids | `[]` | Entities in the group; the label line counts how many are on |
+| `summary` | text | `''` | Fixed label line instead of the count |
+| `on_word` | text | `on` | Word in the count, e.g. `enabled` |
+| `icon_color` | CSS colour | `var(--kit-accent)` | Icon colour |
+
+```yaml
+- type: custom:button-card
+  template: kit_expander
+  entity: input_boolean.settings_open_appliances
+  name: Appliances
+  icon: mdi:fridge
+  variables:
+    items: [input_boolean.notify_fridge, input_boolean.notify_washer]
+  grid_options: {columns: 12, rows: auto}
+- type: custom:button-card
+  template: kit_toggle
+  entity: input_boolean.notify_fridge
+  name: Fridge door
+  variables: {square: true}
+  grid_options: {columns: 6, rows: auto}
+  visibility:
+    - condition: state
+      entity: input_boolean.settings_open_appliances
+      state: "on"
 ```
 
 ## kit_setpoint

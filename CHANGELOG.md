@@ -8,6 +8,7 @@ All notable changes to this kit. Versions follow [Semantic Versioning](https://s
 - `kit_schedule` editor: taps on touch screens (iPhone/iPad) did nothing because button-card cancels `touchend`; the editor now keeps touch events to itself.
 
 ### Added
+- `kit_expander`: header row of a collapsible group (count line such as "2 of 3 on", chevron); open state in an `input_boolean`, group cards use per-card visibility.
 - `kit_reminder_row`: one reminder as a row (text, next time · repeat · speaker, trash icon); tap deletes it after a confirm. Row 0 shows a placeholder when the list is empty.
 - `kit_refresh`: "Refresh now" row that runs a script, spins while it runs and shows the last update time.
 - `kit_schedule`: `edit` variable, a pencil that turns the tile into a schedule editor (time pickers, − / + per range, add / delete, other times; autosave through a configurable action; overlap check).

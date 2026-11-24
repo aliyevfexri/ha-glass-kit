@@ -1,0 +1,61 @@
+# kit_expander: header row of a collapsible group. Tap opens / closes the group; a chevron shows which.
+# entity = an input_boolean that holds the open state (on = open). The cards of the group use HA's own
+#   per-card visibility on that helper:  visibility: [{condition: state, entity: <helper>, state: "on"}]
+# variables:
+#   items: list of entity ids in the group; the label line then counts them, e.g. "2 of 3 on"
+#   summary: fixed text for the label line instead of the count
+#   on_word: word used in the count (default "on")
+#   icon_color: icon colour (default var(--kit-accent))
+kit_expander:
+  template: kit_tile
+  show_icon: true
+  show_name: true
+  variables:
+    items: []
+    summary: ''
+    on_word: 'on'
+    icon_color: "var(--kit-accent, #0a84ff)"
+  tap_action:
+    action: toggle
+    haptic: light
+  styles:
+    card:
+      - height: auto
+      - padding: 10px 16px
+    grid:
+      - grid-template-areas: '"i n c" "i l c"'
+      - grid-template-columns: 40px 1fr auto
+      - grid-template-rows: auto auto
+      - column-gap: 10px
+      - row-gap: 2px
+      - align-content: center
+    icon:
+      - color: '[[[ return variables.icon_color; ]]]'
+    name:
+      - justify-self: start
+      - align-self: end
+    custom_fields:
+      l:
+        - justify-self: start
+        - align-self: start
+      c:
+        - align-self: center
+        - justify-self: end
+        - display: flex
+        - transition: transform 0.2s ease
+        - transform: '[[[ return entity && entity.state === "on" ? "rotate(180deg)" : "none"; ]]]'
+        - color: var(--kit-text-dim, rgba(255, 255, 255, 0.68))
+  custom_fields:
+    l: >
+      [[[
+        if (variables.summary) return variables.summary;
+        var list = variables.items || [];
+        if (!list.length) return '';
+        var on = 0;
+        for (var i = 0; i < list.length; i++) {
+          var s = states[list[i]];
+          if (s && s.state === 'on') on++;
+        }
+        return on + ' of ' + list.length + ' ' + variables.on_word;
+      ]]]
+    c: '<ha-icon icon="mdi:chevron-down" style="width: 24px; height: 24px;"></ha-icon>'
